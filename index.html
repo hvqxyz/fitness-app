@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Fitness Counter</title>
+  <meta name="theme-color" content="#2a78d6" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Fitness Counter</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <label for="entry-date">Date</label>
+      <input type="date" id="entry-date" />
+    </section>
+
+    <section class="card">
+      <h2>Weight</h2>
+      <form id="weight-form" class="inline-form">
+        <input type="number" id="weight-input" step="0.1" min="20" max="400" placeholder="kg" inputmode="decimal" required />
+        <button type="submit">Save weight</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Food</h2>
+      <form id="food-form" class="inline-form">
+        <input type="text" id="food-name-input" placeholder="What did you eat?" required />
+        <input type="number" id="food-kcal-input" step="1" min="0" max="20000" placeholder="kcal" inputmode="numeric" required />
+        <button type="submit">Add food</button>
+      </form>
+      <ul id="food-list" class="food-list"></ul>
+      <p class="total-line">Total: <span id="food-total">0</span> kcal</p>
+    </section>
+
+    <section class="card">
+      <h2>Weight over time</h2>
+      <canvas id="weight-chart" class="chart-canvas"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Calories over time</h2>
+      <canvas id="calories-chart" class="chart-canvas"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>History</h2>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Weight</th>
+              <th>Kcal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+      <button id="show-more" type="button" class="secondary" hidden>Show more</button>
+    </section>
+
+    <section class="card">
+      <h2>Backup</h2>
+      <div class="inline-form">
+        <button id="export-btn" type="button">Export data</button>
+        <button id="import-btn" type="button" class="secondary">Import data</button>
+        <input type="file" id="import-file" accept="application/json" hidden />
+      </div>
+      <p id="backup-message" class="message" role="status"></p>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
