@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitness-counter-v6';
+const CACHE_NAME = 'fitness-counter-v7';
 const APP_SHELL = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const APP_SHELL = [
   './auth.js',
   './auth-ui.js',
   './sheets-api.js',
+  './drive-api.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

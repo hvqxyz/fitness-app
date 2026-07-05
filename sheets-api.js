@@ -1,7 +1,9 @@
 import { getAccessToken } from './auth.js';
+import { findOrCreateFolder, moveFileToFolder } from './drive-api.js';
 
 const API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 const SPREADSHEET_ID_KEY = 'fitness-counter-spreadsheet-id';
+const APP_FOLDER_NAME = 'FitnessManagerAPP';
 const WEIGHT_SHEET = 'Weight';
 const FOOD_SHEET = 'Food';
 
@@ -10,7 +12,8 @@ let sheetIds = null; // { Weight: <numeric id>, Food: <numeric id> }
 
 async function apiFetch(pathAndQuery, options = {}) {
   const token = await getAccessToken();
-  const res = await fetch(`${API_BASE}/${pathAndQuery}`, {
+  const url = pathAndQuery ? `${API_BASE}/${pathAndQuery}` : API_BASE;
+  const res = await fetch(url, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -28,6 +31,8 @@ async function apiFetch(pathAndQuery, options = {}) {
 }
 
 async function createSpreadsheet() {
+  const folderId = await findOrCreateFolder(APP_FOLDER_NAME);
+
   const created = await apiFetch('', {
     method: 'POST',
     body: JSON.stringify({
@@ -35,6 +40,8 @@ async function createSpreadsheet() {
       sheets: [{ properties: { title: WEIGHT_SHEET } }, { properties: { title: FOOD_SHEET } }],
     }),
   });
+
+  await moveFileToFolder(created.spreadsheetId, folderId);
 
   spreadsheetId = created.spreadsheetId;
   localStorage.setItem(SPREADSHEET_ID_KEY, spreadsheetId);
