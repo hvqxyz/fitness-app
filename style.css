@@ -70,6 +70,10 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   border-bottom: 2px solid transparent;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-btn[aria-selected="true"] {
@@ -84,16 +88,6 @@ main {
   padding: 0.75rem 1rem 0;
   max-width: 640px;
   margin: 0 auto;
-}
-
-.tab-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.tab-panel[hidden] {
-  display: none;
 }
 
 .card {
@@ -247,10 +241,20 @@ tr.selected-row td {
   gap: 0.4rem;
 }
 
-.row-actions button {
+.row-actions button,
+.row-actions a {
   min-height: 32px;
   padding: 0.3rem 0.6rem;
   font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.row-actions .edit-link {
+  background: var(--accent);
+  color: #fff;
 }
 
 .row-actions .delete-day {

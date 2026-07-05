@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Fitness Counter — Weight</title>
+  <title>Fitness Counter — Calories</title>
   <meta name="theme-color" content="#2a78d6" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon-192.png" />
@@ -15,8 +15,8 @@
   </header>
 
   <nav class="tabs" role="tablist">
-    <a class="tab-btn" role="tab" aria-selected="true" href="index.html">Weight</a>
-    <a class="tab-btn" role="tab" aria-selected="false" href="calories.html">Calories</a>
+    <a class="tab-btn" role="tab" aria-selected="false" href="index.html">Weight</a>
+    <a class="tab-btn" role="tab" aria-selected="true" href="calories.html">Calories</a>
     <a class="tab-btn" role="tab" aria-selected="false" href="summary.html">Summary</a>
   </nav>
 
@@ -27,19 +27,22 @@
     </section>
 
     <section class="card">
-      <h2>Weight</h2>
-      <form id="weight-form" class="inline-form">
-        <input type="number" id="weight-input" step="0.1" min="20" max="400" placeholder="kg" inputmode="decimal" required />
-        <button type="submit">Save weight</button>
+      <h2>Food</h2>
+      <form id="food-form" class="inline-form">
+        <input type="text" id="food-name-input" placeholder="What did you eat?" required />
+        <input type="number" id="food-kcal-input" step="1" min="0" max="20000" placeholder="kcal" inputmode="numeric" required />
+        <button type="submit">Add food</button>
       </form>
+      <ul id="food-list" class="food-list"></ul>
+      <p class="total-line">Total: <span id="food-total">0</span> kcal</p>
     </section>
 
     <section class="card">
-      <h2>Weight over time</h2>
-      <canvas id="weight-chart" class="chart-canvas"></canvas>
+      <h2>Calories over time</h2>
+      <canvas id="calories-chart" class="chart-canvas"></canvas>
     </section>
   </main>
 
-  <script type="module" src="weight.js"></script>
+  <script type="module" src="calories.js"></script>
 </body>
 </html>

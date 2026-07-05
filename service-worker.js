@@ -1,9 +1,13 @@
-const CACHE_NAME = 'fitness-counter-v2';
+const CACHE_NAME = 'fitness-counter-v3';
 const APP_SHELL = [
   './',
   './index.html',
+  './calories.html',
+  './summary.html',
   './style.css',
-  './app.js',
+  './weight.js',
+  './calories.js',
+  './summary.js',
   './storage.js',
   './charts.js',
   './manifest.webmanifest',
