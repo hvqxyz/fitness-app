@@ -121,6 +121,29 @@ main {
   line-height: 1;
 }
 
+.date-fallback {
+  flex: 0 0 auto;
+  width: 40px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--gridline);
+  border-radius: 8px;
+  background: var(--page);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-fallback::-webkit-datetime-edit {
+  display: none;
+}
+
+.date-fallback::-webkit-calendar-picker-indicator {
+  margin: 0;
+  padding: 0;
+}
+
 .date-strip {
   display: flex;
   gap: 0.4rem;

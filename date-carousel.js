@@ -26,10 +26,12 @@ export function createDateCarousel(container, initialDate, onChange) {
   const prevBtn = container.querySelector('.prev');
   const nextBtn = container.querySelector('.next');
   const strip = container.querySelector('.date-strip');
+  const fallbackInput = container.querySelector('.date-fallback');
   let selected = initialDate;
 
   function render(scrollBehavior) {
     const todayKey = toKey(new Date());
+    if (fallbackInput) fallbackInput.value = selected;
     strip.innerHTML = '';
 
     for (let i = -WINDOW_RADIUS; i <= WINDOW_RADIUS; i++) {
@@ -71,6 +73,11 @@ export function createDateCarousel(container, initialDate, onChange) {
 
   prevBtn.addEventListener('click', () => select(addDays(selected, -1)));
   nextBtn.addEventListener('click', () => select(addDays(selected, 1)));
+  if (fallbackInput) {
+    fallbackInput.addEventListener('change', () => {
+      if (fallbackInput.value) select(fallbackInput.value);
+    });
+  }
 
   render('auto');
 }

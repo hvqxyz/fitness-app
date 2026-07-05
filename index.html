@@ -23,6 +23,7 @@
 
   <main>
     <section class="card date-carousel" id="date-carousel">
+      <input type="date" class="date-fallback" aria-label="Jump to date" />
       <button type="button" class="date-nav prev" aria-label="Previous day">‹</button>
       <div class="date-strip"></div>
       <button type="button" class="date-nav next" aria-label="Next day">›</button>
@@ -34,11 +35,6 @@
         <input type="number" id="weight-input" step="0.1" min="20" max="400" placeholder="kg" inputmode="decimal" required />
         <button type="submit">Save weight</button>
       </form>
-    </section>
-
-    <section class="card">
-      <h2>Weight over time</h2>
-      <canvas id="weight-chart" class="chart-canvas"></canvas>
     </section>
 
     <section class="card">
