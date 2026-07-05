@@ -8,6 +8,10 @@ import {
   bmiCategory,
   latestWeightEntry,
   weightTrend,
+  meanDeviation,
+  todayKey,
+  shiftDateKey,
+  dateRangeInclusive,
 } from './storage.js';
 import { createDateCarousel } from './date-carousel.js';
 import { initAuthGate } from './auth-ui.js';
@@ -20,9 +24,12 @@ const bmiValueEl = document.getElementById('bmi-value');
 const bmiSubEl = document.getElementById('bmi-sub');
 const trend7ValueEl = document.getElementById('trend-7-value');
 const trend30ValueEl = document.getElementById('trend-30-value');
+const meanDeviationValueEl = document.getElementById('mean-deviation');
+const rangeButtons = document.querySelectorAll('.range-btn');
 
 let selectedDate = getSelectedDate();
 let weightChart = null;
+let chartRangeDays = 30;
 
 function showSyncMessage(text, type) {
   syncMessage.textContent = text;
@@ -52,13 +59,39 @@ async function renderStats(entries) {
 
   trend7ValueEl.textContent = formatTrend(weightTrend(entries, 7));
   trend30ValueEl.textContent = formatTrend(weightTrend(entries, 30));
+  const md = meanDeviation(entries, 30);
+  meanDeviationValueEl.textContent = md ? `${md.meanDeviation.toFixed(2)} kg` : '—';
 }
 
 async function renderChart(data) {
   const resolvedData = data || (await loadData());
-  const dates = Object.keys(resolvedData.entries).sort();
   const ctx = document.getElementById("weightChart");
+
+  const endKey = todayKey();
+  const startKey = shiftDateKey(endKey, -(chartRangeDays - 1));
+  const dates = dateRangeInclusive(startKey, endKey);
   const points = dates.map((date) => resolvedData.entries[date]?.weightKg ?? null);
+
+  const logged = points.filter((v) => v !== null && v !== undefined);
+  const average = logged.length > 0 ? logged.reduce((sum, v) => sum + v, 0) / logged.length : null;
+
+  const datasets = [{
+    label: "Weight (kg)",
+    data: points,
+    tension: 0.3
+  }];
+
+  if (average !== null) {
+    datasets.push({
+      label: `Average (${average.toFixed(1)} kg)`,
+      data: dates.map(() => average),
+      borderColor: '#898781',
+      borderDash: [6, 4],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+    });
+  }
 
   if (weightChart) {
     weightChart.destroy();
@@ -69,11 +102,7 @@ async function renderChart(data) {
     type: "line",
     data: {
       labels: dates,
-      datasets: [{
-        label: "Weight (kg)",
-        data: points,
-        tension: 0.3
-      }]
+      datasets,
     },
     options: {
       responsive: true,
@@ -107,6 +136,14 @@ function boot() {
   });
   return render();
 }
+
+rangeButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    chartRangeDays = parseInt(btn.dataset.range, 10);
+    rangeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    renderChart().catch((err) => showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error'));
+  });
+});
 
 weightForm.addEventListener('submit', async (e) => {
   e.preventDefault();

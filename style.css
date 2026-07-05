@@ -152,6 +152,30 @@ main {
   background: transparent;
 }
 
+.range-toggle {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.range-btn {
+  flex: 1;
+  min-height: 36px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--gridline);
+  border-radius: 8px;
+}
+
+.range-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
 .date-carousel {
   display: flex;
   align-items: center;

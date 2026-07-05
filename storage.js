@@ -50,7 +50,7 @@ export function dayTotal(entry) {
   return entry.foods.reduce((sum, f) => sum + (Number(f.kcal) || 0), 0);
 }
 
-function shiftDateKey(dateKey, deltaDays) {
+export function shiftDateKey(dateKey, deltaDays) {
   const d = new Date(dateKey + 'T00:00:00');
   d.setDate(d.getDate() + deltaDays);
   const y = d.getFullYear();
@@ -112,6 +112,32 @@ export function weightTrend(entries, days) {
   return {
     deltaKg: latest.weightKg - entries[fromDate].weightKg,
     fromDate,
+    toDate: latest.date,
+  };
+}
+
+export function meanDeviation(entries, days) {
+  const latest = latestWeightEntry(entries);
+  if (!latest) return null;
+
+  const fromKey = shiftDateKey(latest.date, -days);
+
+  const weights = Object.keys(entries)
+      .filter((d) => entries[d].weightKg !== undefined && d >= fromKey && d <= latest.date)
+      .sort()
+      .map((d) => entries[d].weightKg);
+
+  if (weights.length === 0) return null;
+
+  const mean = weights.reduce((sum, w) => sum + w, 0) / weights.length;
+
+  const meanDeviation =
+      weights.reduce((sum, w) => sum + Math.abs(w - mean), 0) / weights.length;
+
+  return {
+    mean,
+    meanDeviation,
+    fromDate: fromKey,
     toDate: latest.date,
   };
 }

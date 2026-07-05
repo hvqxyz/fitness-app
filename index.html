@@ -61,11 +61,18 @@
           <div class="stat-label">30-day trend</div>
           <div class="stat-value" id="trend-30-value">—</div>
         </div>
-        <div class="stat-tile stat-tile-empty"></div>
+        <div class="stat-tile">
+          <div class="stat-label">30-day Mean deviation</div>
+          <div class="stat-value" id="mean-deviation">—</div>
+        </div>
       </section>
 
       <section class="card">
         <h2>Weight over time</h2>
+        <div class="range-toggle" id="chart-range-toggle">
+          <button type="button" class="range-btn" data-range="7" aria-pressed="false">7 days</button>
+          <button type="button" class="range-btn" data-range="30" aria-pressed="true">30 days</button>
+        </div>
         <canvas id="weightChart"></canvas>
       </section>
     </div>
