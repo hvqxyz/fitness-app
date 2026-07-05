@@ -7,6 +7,8 @@ import {
   clearAndWrite,
   fetchProfile,
   putProfile,
+  fetchIngredients,
+  appendIngredientRow,
   SHEET_NAMES,
 } from './sheets-api.js';
 
@@ -75,6 +77,51 @@ export async function getProfile() {
 
 export async function saveProfile(age, heightCm) {
   await putProfile(age, heightCm);
+}
+
+export async function getIngredients() {
+  return fetchIngredients();
+}
+
+export async function addIngredient(ingredient) {
+  await appendIngredientRow(ingredient);
+}
+
+export async function deleteIngredient(row) {
+  await deleteRows(SHEET_NAMES.INGREDIENTS, [row]);
+}
+
+/**
+ * Scales an ingredient's per-100g nutrition profile to the given weight.
+ */
+export function computeNutritionForWeight(ingredient, weightG) {
+  const factor = weightG / 100;
+  return {
+    kcal: ingredient.kcalPer100g * factor,
+    fiber: ingredient.fiberPer100g * factor,
+    carbs: ingredient.carbsPer100g * factor,
+    satFat: ingredient.satFatPer100g * factor,
+    unsatFat: ingredient.unsatFatPer100g * factor,
+    protein: ingredient.proteinPer100g * factor,
+  };
+}
+
+/**
+ * Sums fiber/carbs/fat/protein across all foods logged for a day. Legacy
+ * food rows with no macro data (logged before this feature existed)
+ * contribute zero, same as dayTotal() treats a missing kcal.
+ */
+export function dayMacros(entry) {
+  const totals = { fiber: 0, carbs: 0, satFat: 0, unsatFat: 0, protein: 0 };
+  if (!entry || !Array.isArray(entry.foods)) return totals;
+  for (const f of entry.foods) {
+    totals.fiber += Number(f.fiber) || 0;
+    totals.carbs += Number(f.carbs) || 0;
+    totals.satFat += Number(f.satFat) || 0;
+    totals.unsatFat += Number(f.unsatFat) || 0;
+    totals.protein += Number(f.protein) || 0;
+  }
+  return totals;
 }
 
 export function computeBmi(weightKg, heightCm) {
@@ -167,8 +214,11 @@ export async function upsertWeight(date, weightKg) {
   }
 }
 
-export async function addFood(date, meal, name, kcal) {
-  await appendFoodRow(date, name, kcal, meal);
+/**
+ * entry: { meal, name, kcal, weightG, fiber, carbs, satFat, unsatFat, protein }
+ */
+export async function addFood(date, entry) {
+  await appendFoodRow(date, entry);
 }
 
 export async function deleteFood(date, index) {
@@ -196,7 +246,17 @@ export async function exportToFile() {
     clean[date] = {};
     if (entry.weightKg !== undefined) clean[date].weightKg = entry.weightKg;
     if (Array.isArray(entry.foods)) {
-      clean[date].foods = entry.foods.map((f) => ({ name: f.name, kcal: f.kcal, meal: f.meal || DEFAULT_MEAL }));
+      clean[date].foods = entry.foods.map((f) => ({
+        name: f.name,
+        kcal: f.kcal,
+        meal: f.meal || DEFAULT_MEAL,
+        weightG: f.weightG,
+        fiber: f.fiber,
+        carbs: f.carbs,
+        satFat: f.satFat,
+        unsatFat: f.unsatFat,
+        protein: f.protein,
+      }));
     }
   }
 
@@ -240,6 +300,11 @@ export function validateImportedData(parsed) {
         if (food.meal !== undefined && typeof food.meal !== 'string') {
           return `Invalid meal for a food entry on "${date}".`;
         }
+        for (const field of ['weightG', 'fiber', 'carbs', 'satFat', 'unsatFat', 'protein']) {
+          if (food[field] !== undefined && (!isFiniteNumber(food[field]) || food[field] < 0)) {
+            return `Invalid ${field} for a food entry on "${date}".`;
+          }
+        }
       }
     }
   }
@@ -270,9 +335,20 @@ export async function applyImportedData(data) {
   for (const [date, entry] of Object.entries(data.entries)) {
     if (entry.weightKg !== undefined) weightRows.push([date, entry.weightKg]);
     if (Array.isArray(entry.foods)) {
-      entry.foods.forEach((f) => foodRows.push([date, f.name, f.kcal, f.meal || DEFAULT_MEAL]));
+      entry.foods.forEach((f) => foodRows.push([
+        date,
+        f.name,
+        f.kcal,
+        f.meal || DEFAULT_MEAL,
+        f.weightG ?? '',
+        f.fiber ?? '',
+        f.carbs ?? '',
+        f.satFat ?? '',
+        f.unsatFat ?? '',
+        f.protein ?? '',
+      ]));
     }
   }
   await clearAndWrite(SHEET_NAMES.WEIGHT, 2, weightRows);
-  await clearAndWrite(SHEET_NAMES.FOOD, 4, foodRows);
+  await clearAndWrite(SHEET_NAMES.FOOD, 10, foodRows);
 }

@@ -9,6 +9,9 @@ import {
   setSelectedDate,
   getProfile,
   saveProfile,
+  getIngredients,
+  addIngredient,
+  deleteIngredient,
 } from './storage.js';
 import { initAuthGate } from './auth-ui.js';
 
@@ -22,6 +25,16 @@ const profileForm = document.getElementById('profile-form');
 const profileAgeInput = document.getElementById('profile-age-input');
 const profileHeightInput = document.getElementById('profile-height-input');
 const profileMessage = document.getElementById('profile-message');
+const ingredientForm = document.getElementById('ingredient-form');
+const ingredientNameInput = document.getElementById('ingredient-name-input');
+const ingredientKcalInput = document.getElementById('ingredient-kcal-input');
+const ingredientFiberInput = document.getElementById('ingredient-fiber-input');
+const ingredientCarbsInput = document.getElementById('ingredient-carbs-input');
+const ingredientSatFatInput = document.getElementById('ingredient-satfat-input');
+const ingredientUnsatFatInput = document.getElementById('ingredient-unsatfat-input');
+const ingredientProteinInput = document.getElementById('ingredient-protein-input');
+const ingredientListEl = document.getElementById('ingredient-list');
+const ingredientMessage = document.getElementById('ingredient-message');
 
 let historyLimit = 30;
 
@@ -55,6 +68,70 @@ profileForm.addEventListener('submit', async (e) => {
     setProfileMessage('Profile saved.', 'success');
   } catch (err) {
     setProfileMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+  }
+});
+
+function setIngredientMessage(text, type) {
+  ingredientMessage.textContent = text;
+  ingredientMessage.className = `message ${type || ''}`.trim();
+}
+
+async function renderIngredients() {
+  try {
+    const ingredients = await getIngredients();
+    ingredientListEl.innerHTML = '';
+    ingredients.forEach((ingredient) => {
+      const li = document.createElement('li');
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'food-name';
+      nameSpan.textContent = ingredient.name;
+      const kcalSpan = document.createElement('span');
+      kcalSpan.textContent = `${ingredient.kcalPer100g} kcal/100g`;
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.textContent = '×';
+      delBtn.setAttribute('aria-label', `Remove ${ingredient.name}`);
+      delBtn.addEventListener('click', async () => {
+        if (!window.confirm(`Remove "${ingredient.name}" from the food database?`)) return;
+        try {
+          await deleteIngredient(ingredient._row);
+          await renderIngredients();
+        } catch (err) {
+          setIngredientMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+        }
+      });
+      li.append(nameSpan, kcalSpan, delBtn);
+      ingredientListEl.appendChild(li);
+    });
+  } catch (err) {
+    setIngredientMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
+  }
+}
+
+ingredientForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = ingredientNameInput.value.trim();
+  const kcalPer100g = parseFloat(ingredientKcalInput.value);
+  if (!name || !Number.isFinite(kcalPer100g)) return;
+  const numOrZero = (input) => {
+    const v = parseFloat(input.value);
+    return Number.isFinite(v) ? v : 0;
+  };
+  try {
+    await addIngredient({
+      name,
+      kcalPer100g,
+      fiberPer100g: numOrZero(ingredientFiberInput),
+      carbsPer100g: numOrZero(ingredientCarbsInput),
+      satFatPer100g: numOrZero(ingredientSatFatInput),
+      unsatFatPer100g: numOrZero(ingredientUnsatFatInput),
+      proteinPer100g: numOrZero(ingredientProteinInput),
+    });
+    ingredientForm.reset();
+    await renderIngredients();
+    setIngredientMessage('Food added.', 'success');
+  } catch (err) {
+    setIngredientMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
   }
 });
 
@@ -164,4 +241,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-initAuthGate(() => Promise.all([renderHistory(), renderProfile()]));
+initAuthGate(() => Promise.all([renderHistory(), renderProfile(), renderIngredients()]));

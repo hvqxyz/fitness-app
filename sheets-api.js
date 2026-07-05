@@ -9,6 +9,10 @@ const SPREADSHEET_MIME = 'application/vnd.google-apps.spreadsheet';
 const WEIGHT_SHEET = 'Weight';
 const FOOD_SHEET = 'Food';
 const PROFILE_SHEET = 'Profile';
+const INGREDIENTS_SHEET = 'Ingredients';
+
+const FOOD_HEADER = ['Date', 'Name', 'Kcal', 'Meal', 'WeightG', 'Fiber', 'Carbs', 'SatFat', 'UnsatFat', 'Protein'];
+const INGREDIENTS_HEADER = ['Name', 'KcalPer100g', 'FiberPer100g', 'CarbsPer100g', 'SatFatPer100g', 'UnsatFatPer100g', 'ProteinPer100g'];
 
 let spreadsheetId = localStorage.getItem(SPREADSHEET_ID_KEY);
 let sheetIds = null; // { Weight: <numeric id>, Food: <numeric id> }
@@ -52,6 +56,7 @@ async function findOrCreateSpreadsheet() {
         { properties: { title: WEIGHT_SHEET } },
         { properties: { title: FOOD_SHEET } },
         { properties: { title: PROFILE_SHEET } },
+        { properties: { title: INGREDIENTS_SHEET } },
       ],
     }),
   });
@@ -69,13 +74,17 @@ async function findOrCreateSpreadsheet() {
     method: 'PUT',
     body: JSON.stringify({ values: [['Date', 'WeightKg']] }),
   });
-  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:D1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:J1?valueInputOption=RAW`, {
     method: 'PUT',
-    body: JSON.stringify({ values: [['Date', 'Name', 'Kcal', 'Meal']] }),
+    body: JSON.stringify({ values: [FOOD_HEADER] }),
   });
   await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:B1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [['Age', 'HeightCm']] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${INGREDIENTS_SHEET}!A1:G1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [INGREDIENTS_HEADER] }),
   });
 
   return spreadsheetId;
@@ -102,17 +111,36 @@ async function ensureProfileSheet() {
 let foodHeaderEnsured = false;
 
 /**
- * Adds the "Meal" column to the Food tab's header for spreadsheets created
- * before this feature existed. The column itself was always appended (not
- * inserted) when writing rows, so existing Date/Name/Kcal cells are never
- * shifted — this just backfills the header label once per session.
+ * Rewrites the Food tab's header row for spreadsheets created before the
+ * Meal / WeightG+macro columns existed. Those columns are always appended
+ * (never inserted) when writing rows, so existing Date/Name/Kcal cells are
+ * never shifted — this just backfills the header labels once per session.
  */
 async function ensureFoodMealHeader() {
   if (foodHeaderEnsured) return;
   foodHeaderEnsured = true;
-  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:D1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:J1?valueInputOption=RAW`, {
     method: 'PUT',
-    body: JSON.stringify({ values: [['Date', 'Name', 'Kcal', 'Meal']] }),
+    body: JSON.stringify({ values: [FOOD_HEADER] }),
+  });
+}
+
+/**
+ * Adds the Ingredients tab (the food database) to spreadsheets created
+ * before this feature existed.
+ */
+async function ensureIngredientsSheet() {
+  if (sheetIds[INGREDIENTS_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: INGREDIENTS_SHEET } } }] }),
+  });
+  sheetIds[INGREDIENTS_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${INGREDIENTS_SHEET}!A1:G1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [INGREDIENTS_HEADER] }),
   });
 }
 
@@ -134,6 +162,7 @@ export async function ensureSpreadsheet() {
   }
   await ensureProfileSheet();
   await ensureFoodMealHeader();
+  await ensureIngredientsSheet();
   return spreadsheetId;
 }
 
@@ -155,12 +184,25 @@ export async function fetchEntries() {
     entries[date]._weightRow = i + 2;
   });
 
+  const num = (v) => (v !== undefined && v !== '' ? parseFloat(v) : undefined);
+
   (foodRange.values || []).slice(1).forEach((row, i) => {
-    const [date, name, kcal, meal] = row;
+    const [date, name, kcal, meal, weightG, fiber, carbs, satFat, unsatFat, protein] = row;
     if (!date) return;
     entries[date] = entries[date] || {};
     if (!Array.isArray(entries[date].foods)) entries[date].foods = [];
-    entries[date].foods.push({ name, kcal: parseFloat(kcal), meal: meal || undefined, _row: i + 2 });
+    entries[date].foods.push({
+      name,
+      kcal: parseFloat(kcal),
+      meal: meal || undefined,
+      weightG: num(weightG),
+      fiber: num(fiber),
+      carbs: num(carbs),
+      satFat: num(satFat),
+      unsatFat: num(unsatFat),
+      protein: num(protein),
+      _row: i + 2,
+    });
   });
 
   return entries;
@@ -182,11 +224,12 @@ export async function appendWeightRow(date, weightKg) {
   });
 }
 
-export async function appendFoodRow(date, name, kcal, meal) {
+export async function appendFoodRow(date, entry) {
   const id = await ensureSpreadsheet();
+  const { name, kcal, meal, weightG, fiber, carbs, satFat, unsatFat, protein } = entry;
   await apiFetch(`${id}/values/${FOOD_SHEET}:append?valueInputOption=RAW`, {
     method: 'POST',
-    body: JSON.stringify({ values: [[date, name, kcal, meal]] }),
+    body: JSON.stringify({ values: [[date, name, kcal, meal, weightG, fiber, carbs, satFat, unsatFat, protein]] }),
   });
 }
 
@@ -232,6 +275,37 @@ export async function putProfile(age, heightCm) {
   });
 }
 
+export async function fetchIngredients() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${INGREDIENTS_SHEET}!A2:G`);
+  return (result.values || [])
+    .map((row, i) => {
+      const [name, kcalPer100g, fiberPer100g, carbsPer100g, satFatPer100g, unsatFatPer100g, proteinPer100g] = row;
+      return {
+        name,
+        kcalPer100g: parseFloat(kcalPer100g) || 0,
+        fiberPer100g: parseFloat(fiberPer100g) || 0,
+        carbsPer100g: parseFloat(carbsPer100g) || 0,
+        satFatPer100g: parseFloat(satFatPer100g) || 0,
+        unsatFatPer100g: parseFloat(unsatFatPer100g) || 0,
+        proteinPer100g: parseFloat(proteinPer100g) || 0,
+        _row: i + 2,
+      };
+    })
+    .filter((ingredient) => ingredient.name);
+}
+
+export async function appendIngredientRow(ingredient) {
+  const id = await ensureSpreadsheet();
+  const { name, kcalPer100g, fiberPer100g, carbsPer100g, satFatPer100g, unsatFatPer100g, proteinPer100g } = ingredient;
+  await apiFetch(`${id}/values/${INGREDIENTS_SHEET}:append?valueInputOption=RAW`, {
+    method: 'POST',
+    body: JSON.stringify({
+      values: [[name, kcalPer100g, fiberPer100g, carbsPer100g, satFatPer100g, unsatFatPer100g, proteinPer100g]],
+    }),
+  });
+}
+
 export async function clearAndWrite(sheetName, headerColumns, rows) {
   const id = await ensureSpreadsheet();
   const lastCol = String.fromCharCode('A'.charCodeAt(0) + headerColumns - 1);
@@ -244,4 +318,9 @@ export async function clearAndWrite(sheetName, headerColumns, rows) {
   }
 }
 
-export const SHEET_NAMES = { WEIGHT: WEIGHT_SHEET, FOOD: FOOD_SHEET, PROFILE: PROFILE_SHEET };
+export const SHEET_NAMES = {
+  WEIGHT: WEIGHT_SHEET,
+  FOOD: FOOD_SHEET,
+  PROFILE: PROFILE_SHEET,
+  INGREDIENTS: INGREDIENTS_SHEET,
+};

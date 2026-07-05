@@ -2,11 +2,14 @@ import {
   loadData,
   todayKey,
   dayTotal,
+  dayMacros,
   addFood,
   deleteFood,
   getSelectedDate,
   setSelectedDate,
   dateRangeInclusive,
+  getIngredients,
+  computeNutritionForWeight,
   MEAL_TYPES,
   DEFAULT_MEAL,
 } from './storage.js';
@@ -17,10 +20,12 @@ import { initAuthGate } from './auth-ui.js';
 const dateCarouselEl = document.getElementById('date-carousel');
 const mealSectionsEl = document.getElementById('meal-sections');
 const foodTotalEl = document.getElementById('food-total');
+const macroSummaryEl = document.getElementById('macro-summary');
 const caloriesChartCanvas = document.getElementById('calories-chart');
 const syncMessage = document.getElementById('sync-message');
 
 let selectedDate = getSelectedDate();
+let ingredients = [];
 const mealRefs = {};
 
 MEAL_TYPES.forEach((meal) => {
@@ -29,39 +34,65 @@ MEAL_TYPES.forEach((meal) => {
   section.innerHTML = `
     <h2>${meal}</h2>
     <form class="inline-form">
-      <input type="text" placeholder="What did you eat?" required />
-      <input type="number" step="1" min="0" max="20000" placeholder="kcal" inputmode="numeric" required />
+      <select class="food-select" required></select>
+      <input type="number" class="food-weight-input" placeholder="grams" step="1" min="1" max="5000" inputmode="numeric" required />
       <button type="submit">Add</button>
     </form>
+    <p class="ingredient-sub no-foods-hint" hidden>No foods yet — add some in Summary.</p>
     <ul class="food-list"></ul>
     <p class="total-line">Subtotal: <span class="meal-subtotal">0</span> kcal</p>
   `;
 
   const form = section.querySelector('form');
-  const nameInput = section.querySelector('input[type="text"]');
-  const kcalInput = section.querySelector('input[type="number"]');
+  const select = section.querySelector('.food-select');
+  const weightInput = section.querySelector('.food-weight-input');
+  const hint = section.querySelector('.no-foods-hint');
   const list = section.querySelector('.food-list');
   const subtotalEl = section.querySelector('.meal-subtotal');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = nameInput.value.trim();
-    const kcal = parseFloat(kcalInput.value);
-    if (!name || !Number.isFinite(kcal)) return;
+    const ingredient = ingredients[select.value];
+    const weightG = parseFloat(weightInput.value);
+    if (!ingredient || !Number.isFinite(weightG) || weightG <= 0) return;
+    const nutrition = computeNutritionForWeight(ingredient, weightG);
     try {
-      await addFood(selectedDate, meal, name, kcal);
-      nameInput.value = '';
-      kcalInput.value = '';
-      nameInput.focus();
+      await addFood(selectedDate, {
+        meal,
+        name: ingredient.name,
+        weightG,
+        ...nutrition,
+      });
+      weightInput.value = '';
+      weightInput.focus();
       await render();
     } catch (err) {
       showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
     }
   });
 
-  mealRefs[meal] = { list, subtotalEl };
+  mealRefs[meal] = { select, weightInput, form, hint, list, subtotalEl };
   mealSectionsEl.appendChild(section);
 });
+
+function populateFoodSelects() {
+  MEAL_TYPES.forEach((meal) => {
+    const { select, weightInput, form, hint } = mealRefs[meal];
+    select.innerHTML = '';
+    const hasFoods = ingredients.length > 0;
+    hint.hidden = hasFoods;
+    select.disabled = !hasFoods;
+    weightInput.disabled = !hasFoods;
+    form.querySelector('button').disabled = !hasFoods;
+
+    ingredients.forEach((ingredient, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = ingredient.name;
+      select.appendChild(option);
+    });
+  });
+}
 
 function showSyncMessage(text, type) {
   syncMessage.textContent = text;
@@ -86,6 +117,10 @@ async function renderChart() {
   drawLineChart(caloriesChartCanvas, points, { series: 'aqua', unit: 'kcal' });
 }
 
+function formatMacro(value) {
+  return Math.round(value * 10) / 10;
+}
+
 async function render() {
   try {
     const data = await loadData();
@@ -104,9 +139,9 @@ async function render() {
         const li = document.createElement('li');
         const nameSpan = document.createElement('span');
         nameSpan.className = 'food-name';
-        nameSpan.textContent = food.name;
+        nameSpan.textContent = food.weightG !== undefined ? `${food.name} (${food.weightG}g)` : food.name;
         const kcalSpan = document.createElement('span');
-        kcalSpan.textContent = `${food.kcal} kcal`;
+        kcalSpan.textContent = `${Math.round(food.kcal)} kcal`;
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.textContent = '×';
@@ -124,10 +159,17 @@ async function render() {
       });
 
       const subtotal = mealFoods.reduce((sum, { food }) => sum + (Number(food.kcal) || 0), 0);
-      subtotalEl.textContent = subtotal.toLocaleString();
+      subtotalEl.textContent = Math.round(subtotal).toLocaleString();
     });
 
-    foodTotalEl.textContent = dayTotal(entry).toLocaleString();
+    foodTotalEl.textContent = Math.round(dayTotal(entry)).toLocaleString();
+
+    const macros = dayMacros(entry);
+    macroSummaryEl.textContent =
+      `Fiber ${formatMacro(macros.fiber)}g · Carbs ${formatMacro(macros.carbs)}g · ` +
+      `Sat Fat ${formatMacro(macros.satFat)}g · Unsat Fat ${formatMacro(macros.unsatFat)}g · ` +
+      `Protein ${formatMacro(macros.protein)}g`;
+
     await renderChart();
     showSyncMessage('', '');
   } catch (err) {
@@ -135,12 +177,21 @@ async function render() {
   }
 }
 
-function boot() {
+async function boot() {
   createDateCarousel(dateCarouselEl, selectedDate, (newDate) => {
     selectedDate = newDate;
     setSelectedDate(newDate);
     render();
   });
+
+  try {
+    ingredients = await getIngredients();
+  } catch (err) {
+    showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
+    ingredients = [];
+  }
+  populateFoodSelects();
+
   return render();
 }
 
