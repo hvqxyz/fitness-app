@@ -75,10 +75,18 @@ async function renderChart(data) {
   const logged = points.filter((v) => v !== null && v !== undefined);
   const average = logged.length > 0 ? logged.reduce((sum, v) => sum + v, 0) / logged.length : null;
 
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const weightColor = isDarkMode ? '#3987e5' : '#2a78d6';
+
   const datasets = [{
     label: "Weight (kg)",
     data: points,
-    tension: 0.3
+    tension: 0.3,
+    spanGaps: false,
+    borderColor: weightColor,
+    backgroundColor: weightColor,
+    pointBackgroundColor: weightColor,
+    pointRadius: 3,
   }];
 
   if (average !== null) {
