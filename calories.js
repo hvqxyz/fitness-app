@@ -9,8 +9,9 @@ import {
   dateRangeInclusive,
 } from './storage.js';
 import { drawLineChart } from './charts.js';
+import { createDateCarousel } from './date-carousel.js';
 
-const dateInput = document.getElementById('entry-date');
+const dateCarouselEl = document.getElementById('date-carousel');
 const foodForm = document.getElementById('food-form');
 const foodNameInput = document.getElementById('food-name-input');
 const foodKcalInput = document.getElementById('food-kcal-input');
@@ -67,9 +68,9 @@ function render() {
   renderChart();
 }
 
-dateInput.addEventListener('change', () => {
-  selectedDate = dateInput.value || todayKey();
-  setSelectedDate(selectedDate);
+createDateCarousel(dateCarouselEl, selectedDate, (newDate) => {
+  selectedDate = newDate;
+  setSelectedDate(newDate);
   render();
 });
 
@@ -97,5 +98,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-dateInput.value = selectedDate;
 render();

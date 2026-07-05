@@ -103,6 +103,75 @@ main {
   color: var(--text-secondary);
 }
 
+.date-carousel {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+}
+
+.date-nav {
+  flex: 0 0 auto;
+  min-width: 36px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.date-strip {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 0.15rem 0;
+}
+
+.date-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.date-pill {
+  scroll-snap-align: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--gridline);
+  border-radius: 12px;
+  background: var(--page);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.date-pill .day {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.date-pill.today {
+  border-color: var(--accent);
+}
+
+.date-pill.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.date-pill.selected .dow,
+.date-pill.selected .day {
+  color: #fff;
+}
+
 label {
   display: block;
   font-size: 0.85rem;
@@ -110,7 +179,6 @@ label {
   margin-bottom: 0.25rem;
 }
 
-input[type="date"],
 input[type="number"],
 input[type="text"] {
   font-size: 1rem;

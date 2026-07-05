@@ -8,6 +8,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header class="app-header">
@@ -21,9 +22,10 @@
   </nav>
 
   <main>
-    <section class="card">
-      <label for="entry-date">Date</label>
-      <input type="date" id="entry-date" />
+    <section class="card date-carousel" id="date-carousel">
+      <button type="button" class="date-nav prev" aria-label="Previous day">‹</button>
+      <div class="date-strip"></div>
+      <button type="button" class="date-nav next" aria-label="Next day">›</button>
     </section>
 
     <section class="card">
@@ -37,6 +39,11 @@
     <section class="card">
       <h2>Weight over time</h2>
       <canvas id="weight-chart" class="chart-canvas"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Weight over time</h2>
+      <canvas id="weightChart"></canvas>
     </section>
   </main>
 

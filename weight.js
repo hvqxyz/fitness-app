@@ -1,35 +1,48 @@
 import {
   loadData,
-  todayKey,
   upsertWeight,
   getSelectedDate,
   setSelectedDate,
-  dateRangeInclusive,
 } from './storage.js';
-import { drawLineChart } from './charts.js';
+import { createDateCarousel } from './date-carousel.js';
 
-const dateInput = document.getElementById('entry-date');
+const dateCarouselEl = document.getElementById('date-carousel');
 const weightForm = document.getElementById('weight-form');
 const weightInput = document.getElementById('weight-input');
-const weightChartCanvas = document.getElementById('weight-chart');
 
 let selectedDate = getSelectedDate();
+let weightChart = null;
 
 function renderChart() {
   const data = loadData();
   const dates = Object.keys(data.entries).sort();
+  const ctx = document.getElementById("weightChart");
+  const points = dates.map((date) => data.entries[date]?.weightKg ?? null);
 
-  if (dates.length === 0) {
-    drawLineChart(weightChartCanvas, [], { series: 'blue', unit: 'kg' });
-    return;
+  if (weightChart) {
+    weightChart.destroy();
+    weightChart = null;
   }
 
-  const endKey = dates[dates.length - 1] > todayKey() ? dates[dates.length - 1] : todayKey();
-  const points = dateRangeInclusive(dates[0], endKey).map((date) => ({
-    x: date,
-    y: data.entries[date]?.weightKg ?? null,
-  }));
-  drawLineChart(weightChartCanvas, points, { series: 'blue', unit: 'kg' });
+  weightChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: dates,
+      datasets: [{
+        label: "Weight (kg)",
+        data: points,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: false
+        }
+      }
+    }
+  });
 }
 
 function render() {
@@ -39,9 +52,9 @@ function render() {
   renderChart();
 }
 
-dateInput.addEventListener('change', () => {
-  selectedDate = dateInput.value || todayKey();
-  setSelectedDate(selectedDate);
+createDateCarousel(dateCarouselEl, selectedDate, (newDate) => {
+  selectedDate = newDate;
+  setSelectedDate(newDate);
   render();
 });
 
@@ -61,9 +74,9 @@ window.addEventListener('resize', () => {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    navigator.serviceWorker.register('service-worker.js').catch(() => {
+    });
   });
 }
 
-dateInput.value = selectedDate;
 render();

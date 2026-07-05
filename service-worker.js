@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitness-counter-v3';
+const CACHE_NAME = 'fitness-counter-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const APP_SHELL = [
   './summary.js',
   './storage.js',
   './charts.js',
+  './date-carousel.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
