@@ -69,9 +69,9 @@ async function findOrCreateSpreadsheet() {
     method: 'PUT',
     body: JSON.stringify({ values: [['Date', 'WeightKg']] }),
   });
-  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:C1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:D1?valueInputOption=RAW`, {
     method: 'PUT',
-    body: JSON.stringify({ values: [['Date', 'Name', 'Kcal']] }),
+    body: JSON.stringify({ values: [['Date', 'Name', 'Kcal', 'Meal']] }),
   });
   await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:B1?valueInputOption=RAW`, {
     method: 'PUT',
@@ -99,6 +99,23 @@ async function ensureProfileSheet() {
   });
 }
 
+let foodHeaderEnsured = false;
+
+/**
+ * Adds the "Meal" column to the Food tab's header for spreadsheets created
+ * before this feature existed. The column itself was always appended (not
+ * inserted) when writing rows, so existing Date/Name/Kcal cells are never
+ * shifted — this just backfills the header label once per session.
+ */
+async function ensureFoodMealHeader() {
+  if (foodHeaderEnsured) return;
+  foodHeaderEnsured = true;
+  await apiFetch(`${spreadsheetId}/values/${FOOD_SHEET}!A1:D1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [['Date', 'Name', 'Kcal', 'Meal']] }),
+  });
+}
+
 async function loadSheetIds() {
   if (sheetIds) return sheetIds;
   const meta = await apiFetch(`${spreadsheetId}?fields=sheets.properties`);
@@ -116,6 +133,7 @@ export async function ensureSpreadsheet() {
     await findOrCreateSpreadsheet();
   }
   await ensureProfileSheet();
+  await ensureFoodMealHeader();
   return spreadsheetId;
 }
 
@@ -138,11 +156,11 @@ export async function fetchEntries() {
   });
 
   (foodRange.values || []).slice(1).forEach((row, i) => {
-    const [date, name, kcal] = row;
+    const [date, name, kcal, meal] = row;
     if (!date) return;
     entries[date] = entries[date] || {};
     if (!Array.isArray(entries[date].foods)) entries[date].foods = [];
-    entries[date].foods.push({ name, kcal: parseFloat(kcal), _row: i + 2 });
+    entries[date].foods.push({ name, kcal: parseFloat(kcal), meal: meal || undefined, _row: i + 2 });
   });
 
   return entries;
@@ -164,11 +182,11 @@ export async function appendWeightRow(date, weightKg) {
   });
 }
 
-export async function appendFoodRow(date, name, kcal) {
+export async function appendFoodRow(date, name, kcal, meal) {
   const id = await ensureSpreadsheet();
   await apiFetch(`${id}/values/${FOOD_SHEET}:append?valueInputOption=RAW`, {
     method: 'POST',
-    body: JSON.stringify({ values: [[date, name, kcal]] }),
+    body: JSON.stringify({ values: [[date, name, kcal, meal]] }),
   });
 }
 

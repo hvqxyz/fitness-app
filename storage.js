@@ -13,6 +13,16 @@ import {
 const CURRENT_VERSION = 1;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+export const MEAL_TYPES = [
+  'Breakfast',
+  'Morning Snack',
+  'Lunch',
+  'Afternoon Snack',
+  'Dinner',
+  'Evening Snack',
+];
+export const DEFAULT_MEAL = MEAL_TYPES[0];
+
 export function todayKey() {
   const d = new Date();
   const y = d.getFullYear();
@@ -157,8 +167,8 @@ export async function upsertWeight(date, weightKg) {
   }
 }
 
-export async function addFood(date, name, kcal) {
-  await appendFoodRow(date, name, kcal);
+export async function addFood(date, meal, name, kcal) {
+  await appendFoodRow(date, name, kcal, meal);
 }
 
 export async function deleteFood(date, index) {
@@ -186,7 +196,7 @@ export async function exportToFile() {
     clean[date] = {};
     if (entry.weightKg !== undefined) clean[date].weightKg = entry.weightKg;
     if (Array.isArray(entry.foods)) {
-      clean[date].foods = entry.foods.map((f) => ({ name: f.name, kcal: f.kcal }));
+      clean[date].foods = entry.foods.map((f) => ({ name: f.name, kcal: f.kcal, meal: f.meal || DEFAULT_MEAL }));
     }
   }
 
@@ -227,6 +237,9 @@ export function validateImportedData(parsed) {
         if (!food || typeof food.name !== 'string' || !isFiniteNumber(food.kcal) || food.kcal < 0 || food.kcal > 20000) {
           return `Invalid food entry for date "${date}".`;
         }
+        if (food.meal !== undefined && typeof food.meal !== 'string') {
+          return `Invalid meal for a food entry on "${date}".`;
+        }
       }
     }
   }
@@ -257,9 +270,9 @@ export async function applyImportedData(data) {
   for (const [date, entry] of Object.entries(data.entries)) {
     if (entry.weightKg !== undefined) weightRows.push([date, entry.weightKg]);
     if (Array.isArray(entry.foods)) {
-      entry.foods.forEach((f) => foodRows.push([date, f.name, f.kcal]));
+      entry.foods.forEach((f) => foodRows.push([date, f.name, f.kcal, f.meal || DEFAULT_MEAL]));
     }
   }
   await clearAndWrite(SHEET_NAMES.WEIGHT, 2, weightRows);
-  await clearAndWrite(SHEET_NAMES.FOOD, 3, foodRows);
+  await clearAndWrite(SHEET_NAMES.FOOD, 4, foodRows);
 }

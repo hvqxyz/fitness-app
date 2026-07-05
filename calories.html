@@ -37,15 +37,10 @@
         <button type="button" class="date-nav next" aria-label="Next day">›</button>
       </section>
 
+      <div id="meal-sections"></div>
+
       <section class="card">
-        <h2>Food</h2>
-        <form id="food-form" class="inline-form">
-          <input type="text" id="food-name-input" placeholder="What did you eat?" required />
-          <input type="number" id="food-kcal-input" step="1" min="0" max="20000" placeholder="kcal" inputmode="numeric" required />
-          <button type="submit">Add food</button>
-        </form>
-        <ul id="food-list" class="food-list"></ul>
-        <p class="total-line">Total: <span id="food-total">0</span> kcal</p>
+        <p class="total-line">Today's total: <span id="food-total">0</span> kcal</p>
         <p id="sync-message" class="message" role="status"></p>
       </section>
 

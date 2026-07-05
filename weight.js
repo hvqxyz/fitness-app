@@ -65,14 +65,11 @@ async function renderStats(entries) {
 
 async function renderChart(data) {
   const resolvedData = data || (await loadData());
+  const dates = Object.keys(resolvedData.entries).sort();
   const ctx = document.getElementById("weightChart");
-
-  const endKey = todayKey();
-  const startKey = shiftDateKey(endKey, -(chartRangeDays - 1));
-  const dates = dateRangeInclusive(startKey, endKey);
   const points = dates.map((date) => resolvedData.entries[date]?.weightKg ?? null);
-
   const logged = points.filter((v) => v !== null && v !== undefined);
+
   const average = logged.length > 0 ? logged.reduce((sum, v) => sum + v, 0) / logged.length : null;
 
   const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -81,16 +78,12 @@ async function renderChart(data) {
   const datasets = [{
     label: "Weight (kg)",
     data: points,
-    tension: 0.3,
-    spanGaps: false,
     borderColor: weightColor,
     backgroundColor: weightColor,
     pointBackgroundColor: weightColor,
     pointRadius: 3,
-  }];
-
-  if (average !== null) {
-    datasets.push({
+  },
+    {
       label: `Average (${average.toFixed(1)} kg)`,
       data: dates.map(() => average),
       borderColor: '#898781',
@@ -98,8 +91,8 @@ async function renderChart(data) {
       borderWidth: 1.5,
       pointRadius: 0,
       fill: false,
-    });
-  }
+    }];
+
 
   if (weightChart) {
     weightChart.destroy();
@@ -110,7 +103,7 @@ async function renderChart(data) {
     type: "line",
     data: {
       labels: dates,
-      datasets,
+      datasets: datasets
     },
     options: {
       responsive: true,

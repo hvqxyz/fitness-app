@@ -7,21 +7,61 @@ import {
   getSelectedDate,
   setSelectedDate,
   dateRangeInclusive,
+  MEAL_TYPES,
+  DEFAULT_MEAL,
 } from './storage.js';
 import { drawLineChart } from './charts.js';
 import { createDateCarousel } from './date-carousel.js';
 import { initAuthGate } from './auth-ui.js';
 
 const dateCarouselEl = document.getElementById('date-carousel');
-const foodForm = document.getElementById('food-form');
-const foodNameInput = document.getElementById('food-name-input');
-const foodKcalInput = document.getElementById('food-kcal-input');
-const foodListEl = document.getElementById('food-list');
+const mealSectionsEl = document.getElementById('meal-sections');
 const foodTotalEl = document.getElementById('food-total');
 const caloriesChartCanvas = document.getElementById('calories-chart');
 const syncMessage = document.getElementById('sync-message');
 
 let selectedDate = getSelectedDate();
+const mealRefs = {};
+
+MEAL_TYPES.forEach((meal) => {
+  const section = document.createElement('section');
+  section.className = 'card';
+  section.innerHTML = `
+    <h2>${meal}</h2>
+    <form class="inline-form">
+      <input type="text" placeholder="What did you eat?" required />
+      <input type="number" step="1" min="0" max="20000" placeholder="kcal" inputmode="numeric" required />
+      <button type="submit">Add</button>
+    </form>
+    <ul class="food-list"></ul>
+    <p class="total-line">Subtotal: <span class="meal-subtotal">0</span> kcal</p>
+  `;
+
+  const form = section.querySelector('form');
+  const nameInput = section.querySelector('input[type="text"]');
+  const kcalInput = section.querySelector('input[type="number"]');
+  const list = section.querySelector('.food-list');
+  const subtotalEl = section.querySelector('.meal-subtotal');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    const kcal = parseFloat(kcalInput.value);
+    if (!name || !Number.isFinite(kcal)) return;
+    try {
+      await addFood(selectedDate, meal, name, kcal);
+      nameInput.value = '';
+      kcalInput.value = '';
+      nameInput.focus();
+      await render();
+    } catch (err) {
+      showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+    }
+  });
+
+  mealRefs[meal] = { list, subtotalEl };
+  mealSectionsEl.appendChild(section);
+});
 
 function showSyncMessage(text, type) {
   syncMessage.textContent = text;
@@ -50,30 +90,41 @@ async function render() {
   try {
     const data = await loadData();
     const entry = data.entries[selectedDate] || {};
-
-    foodListEl.innerHTML = '';
     const foods = Array.isArray(entry.foods) ? entry.foods : [];
-    foods.forEach((food, index) => {
-      const li = document.createElement('li');
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'food-name';
-      nameSpan.textContent = food.name;
-      const kcalSpan = document.createElement('span');
-      kcalSpan.textContent = `${food.kcal} kcal`;
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.textContent = '×';
-      delBtn.setAttribute('aria-label', `Remove ${food.name}`);
-      delBtn.addEventListener('click', async () => {
-        try {
-          await deleteFood(selectedDate, index);
-          await render();
-        } catch (err) {
-          showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
-        }
+
+    MEAL_TYPES.forEach((meal) => {
+      const { list, subtotalEl } = mealRefs[meal];
+      list.innerHTML = '';
+
+      const mealFoods = foods
+        .map((food, index) => ({ food, index }))
+        .filter(({ food }) => (food.meal || DEFAULT_MEAL) === meal);
+
+      mealFoods.forEach(({ food, index }) => {
+        const li = document.createElement('li');
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'food-name';
+        nameSpan.textContent = food.name;
+        const kcalSpan = document.createElement('span');
+        kcalSpan.textContent = `${food.kcal} kcal`;
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.textContent = '×';
+        delBtn.setAttribute('aria-label', `Remove ${food.name}`);
+        delBtn.addEventListener('click', async () => {
+          try {
+            await deleteFood(selectedDate, index);
+            await render();
+          } catch (err) {
+            showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+          }
+        });
+        li.append(nameSpan, kcalSpan, delBtn);
+        list.appendChild(li);
       });
-      li.append(nameSpan, kcalSpan, delBtn);
-      foodListEl.appendChild(li);
+
+      const subtotal = mealFoods.reduce((sum, { food }) => sum + (Number(food.kcal) || 0), 0);
+      subtotalEl.textContent = subtotal.toLocaleString();
     });
 
     foodTotalEl.textContent = dayTotal(entry).toLocaleString();
@@ -92,22 +143,6 @@ function boot() {
   });
   return render();
 }
-
-foodForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = foodNameInput.value.trim();
-  const kcal = parseFloat(foodKcalInput.value);
-  if (!name || !Number.isFinite(kcal)) return;
-  try {
-    await addFood(selectedDate, name, kcal);
-    foodNameInput.value = '';
-    foodKcalInput.value = '';
-    foodNameInput.focus();
-    await render();
-  } catch (err) {
-    showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
-  }
-});
 
 let resizeTimer;
 window.addEventListener('resize', () => {
