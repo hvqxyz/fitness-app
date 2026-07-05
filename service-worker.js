@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitness-counter-v13';
+const CACHE_NAME = 'fitness-counter-v14';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const APP_SHELL = [
   './storage.js',
   './charts.js',
   './date-carousel.js',
+  './food-search.js',
   './config.js',
   './auth.js',
   './auth-ui.js',

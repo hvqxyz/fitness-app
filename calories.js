@@ -15,6 +15,7 @@ import {
 } from './storage.js';
 import { drawLineChart } from './charts.js';
 import { createDateCarousel } from './date-carousel.js';
+import { createFoodSearch } from './food-search.js';
 import { initAuthGate } from './auth-ui.js';
 
 const dateCarouselEl = document.getElementById('date-carousel');
@@ -33,8 +34,11 @@ MEAL_TYPES.forEach((meal) => {
   section.className = 'card';
   section.innerHTML = `
     <h2>${meal}</h2>
-    <form class="inline-form">
-      <select class="food-select" required></select>
+    <form class="inline-form food-form">
+      <div class="food-search">
+        <input type="text" class="food-search-input" placeholder="Search food…" autocomplete="off" required />
+        <ul class="food-search-results" hidden></ul>
+      </div>
       <input type="number" class="food-weight-input" placeholder="grams" step="1" min="1" max="5000" inputmode="numeric" required />
       <button type="submit">Add</button>
     </form>
@@ -44,15 +48,17 @@ MEAL_TYPES.forEach((meal) => {
   `;
 
   const form = section.querySelector('form');
-  const select = section.querySelector('.food-select');
+  const searchContainer = section.querySelector('.food-search');
   const weightInput = section.querySelector('.food-weight-input');
   const hint = section.querySelector('.no-foods-hint');
   const list = section.querySelector('.food-list');
   const subtotalEl = section.querySelector('.meal-subtotal');
 
+  const search = createFoodSearch(searchContainer, ingredients, () => {});
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const ingredient = ingredients[select.value];
+    const ingredient = ingredients[search.getSelectedIndex()];
     const weightG = parseFloat(weightInput.value);
     if (!ingredient || !Number.isFinite(weightG) || weightG <= 0) return;
     const nutrition = computeNutritionForWeight(ingredient, weightG);
@@ -63,34 +69,27 @@ MEAL_TYPES.forEach((meal) => {
         weightG,
         ...nutrition,
       });
+      search.reset();
       weightInput.value = '';
-      weightInput.focus();
       await render();
     } catch (err) {
       showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
     }
   });
 
-  mealRefs[meal] = { select, weightInput, form, hint, list, subtotalEl };
+  mealRefs[meal] = { search, weightInput, form, hint, list, subtotalEl };
   mealSectionsEl.appendChild(section);
 });
 
 function populateFoodSelects() {
+  const hasFoods = ingredients.length > 0;
   MEAL_TYPES.forEach((meal) => {
-    const { select, weightInput, form, hint } = mealRefs[meal];
-    select.innerHTML = '';
-    const hasFoods = ingredients.length > 0;
+    const { search, weightInput, form, hint } = mealRefs[meal];
     hint.hidden = hasFoods;
-    select.disabled = !hasFoods;
+    search.setIngredients(ingredients);
+    search.setDisabled(!hasFoods);
     weightInput.disabled = !hasFoods;
     form.querySelector('button').disabled = !hasFoods;
-
-    ingredients.forEach((ingredient, index) => {
-      const option = document.createElement('option');
-      option.value = index;
-      option.textContent = ingredient.name;
-      select.appendChild(option);
-    });
   });
 }
 

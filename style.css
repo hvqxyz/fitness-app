@@ -339,6 +339,82 @@ input[type="text"] {
   color: var(--muted);
 }
 
+.food-form {
+  align-items: flex-start;
+}
+
+.food-search {
+  position: relative;
+  flex: 1 1 160px;
+}
+
+.food-search-input {
+  width: 100%;
+}
+
+.food-search-input:disabled {
+  opacity: 0.5;
+}
+
+.food-search-results {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(20rem, calc(100vw - 3rem));
+  z-index: 20;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.food-search-results[hidden] {
+  display: none;
+}
+
+.food-search-result {
+  min-height: 44px;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.food-search-result:hover,
+.food-search-result.active {
+  background: var(--page);
+}
+
+.food-search-result .result-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-search-result .result-kcal {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.food-search-empty {
+  padding: 0.55rem 0.65rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 button {
   min-height: 44px;
   padding: 0.6rem 1rem;
