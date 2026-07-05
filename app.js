@@ -12,6 +12,13 @@ import {
 } from './storage.js';
 import { drawLineChart } from './charts.js';
 
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanels = {
+  weight: document.getElementById('tab-weight'),
+  calories: document.getElementById('tab-calories'),
+  summary: document.getElementById('tab-summary'),
+};
+const dateCard = document.getElementById('date-card');
 const dateInput = document.getElementById('entry-date');
 const weightForm = document.getElementById('weight-form');
 const weightInput = document.getElementById('weight-input');
@@ -113,6 +120,7 @@ function renderHistory() {
     editBtn.addEventListener('click', () => {
       selectedDate = date;
       dateInput.value = date;
+      setActiveTab('weight');
       renderAll();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
@@ -169,6 +177,21 @@ function renderAll() {
   renderHistory();
   renderCharts();
 }
+
+function setActiveTab(tabName) {
+  tabButtons.forEach((btn) => {
+    btn.setAttribute('aria-selected', String(btn.dataset.tab === tabName));
+  });
+  Object.entries(tabPanels).forEach(([name, panel]) => {
+    panel.hidden = name !== tabName;
+  });
+  dateCard.hidden = tabName === 'summary';
+  if (tabName !== 'summary') renderCharts();
+}
+
+tabButtons.forEach((btn) => {
+  btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+});
 
 dateInput.addEventListener('change', () => {
   selectedDate = dateInput.value || todayKey();
