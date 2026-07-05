@@ -159,12 +159,26 @@ main {
 }
 
 .date-pill.today {
-  border-color: var(--accent);
+  border-color: var(--good);
+}
+
+.date-pill.today .dow,
+.date-pill.today .day {
+  color: var(--good);
+}
+
+.date-pill.future {
+  opacity: 0.55;
+}
+
+.date-pill.future .day {
+  color: var(--text-secondary);
 }
 
 .date-pill.selected {
   background: var(--accent);
   border-color: var(--accent);
+  opacity: 1;
 }
 
 .date-pill.selected .dow,
