@@ -39,6 +39,18 @@ export async function findOrCreateFolder(name) {
 }
 
 /**
+ * Finds a non-trashed file by name and mime type inside the given folder.
+ * Returns its file ID, or null if no such file exists yet.
+ */
+export async function findFileInFolder(folderId, name, mimeType) {
+  const query = encodeURIComponent(
+    `name='${name}' and '${folderId}' in parents and mimeType='${mimeType}' and trashed=false`
+  );
+  const found = await driveFetch(`?q=${query}&fields=files(id,name)`);
+  return found.files && found.files.length > 0 ? found.files[0].id : null;
+}
+
+/**
  * Moves a freshly-created file (whose only parent is Drive root) into the
  * given folder.
  */

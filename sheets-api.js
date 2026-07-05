@@ -1,9 +1,11 @@
 import { getAccessToken } from './auth.js';
-import { findOrCreateFolder, moveFileToFolder } from './drive-api.js';
+import { findOrCreateFolder, findFileInFolder, moveFileToFolder } from './drive-api.js';
 
 const API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 const SPREADSHEET_ID_KEY = 'fitness-counter-spreadsheet-id';
 const APP_FOLDER_NAME = 'FitnessManagerAPP';
+const SPREADSHEET_NAME = 'Fitness Counter Data';
+const SPREADSHEET_MIME = 'application/vnd.google-apps.spreadsheet';
 const WEIGHT_SHEET = 'Weight';
 const FOOD_SHEET = 'Food';
 
@@ -30,13 +32,21 @@ async function apiFetch(pathAndQuery, options = {}) {
     : res.json();
 }
 
-async function createSpreadsheet() {
+async function findOrCreateSpreadsheet() {
   const folderId = await findOrCreateFolder(APP_FOLDER_NAME);
+
+  const existingId = await findFileInFolder(folderId, SPREADSHEET_NAME, SPREADSHEET_MIME);
+  if (existingId) {
+    spreadsheetId = existingId;
+    localStorage.setItem(SPREADSHEET_ID_KEY, spreadsheetId);
+    await loadSheetIds();
+    return spreadsheetId;
+  }
 
   const created = await apiFetch('', {
     method: 'POST',
     body: JSON.stringify({
-      properties: { title: 'Fitness Counter Data' },
+      properties: { title: SPREADSHEET_NAME },
       sheets: [{ properties: { title: WEIGHT_SHEET } }, { properties: { title: FOOD_SHEET } }],
     }),
   });
@@ -77,7 +87,7 @@ export async function ensureSpreadsheet() {
     await loadSheetIds();
     return spreadsheetId;
   }
-  return createSpreadsheet();
+  return findOrCreateSpreadsheet();
 }
 
 /**
