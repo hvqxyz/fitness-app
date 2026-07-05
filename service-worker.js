@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitness-counter-v7';
+const CACHE_NAME = 'fitness-counter-v8';
 const APP_SHELL = [
   './',
   './index.html',
@@ -39,6 +39,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Only cache-first our own app shell. Cross-origin calls (Sheets/Drive API,
+  // Google Identity Services, the Chart.js CDN) must always hit the network —
+  // caching them would silently serve stale Sheets data after every edit.
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
