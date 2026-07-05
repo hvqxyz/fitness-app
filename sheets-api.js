@@ -8,6 +8,7 @@ const SPREADSHEET_NAME = 'Fitness Counter Data';
 const SPREADSHEET_MIME = 'application/vnd.google-apps.spreadsheet';
 const WEIGHT_SHEET = 'Weight';
 const FOOD_SHEET = 'Food';
+const PROFILE_SHEET = 'Profile';
 
 let spreadsheetId = localStorage.getItem(SPREADSHEET_ID_KEY);
 let sheetIds = null; // { Weight: <numeric id>, Food: <numeric id> }
@@ -47,7 +48,11 @@ async function findOrCreateSpreadsheet() {
     method: 'POST',
     body: JSON.stringify({
       properties: { title: SPREADSHEET_NAME },
-      sheets: [{ properties: { title: WEIGHT_SHEET } }, { properties: { title: FOOD_SHEET } }],
+      sheets: [
+        { properties: { title: WEIGHT_SHEET } },
+        { properties: { title: FOOD_SHEET } },
+        { properties: { title: PROFILE_SHEET } },
+      ],
     }),
   });
 
@@ -68,8 +73,30 @@ async function findOrCreateSpreadsheet() {
     method: 'PUT',
     body: JSON.stringify({ values: [['Date', 'Name', 'Kcal']] }),
   });
+  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:B1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [['Age', 'HeightCm']] }),
+  });
 
   return spreadsheetId;
+}
+
+/**
+ * Adds the Profile tab to spreadsheets created before this feature existed.
+ */
+async function ensureProfileSheet() {
+  if (sheetIds[PROFILE_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: PROFILE_SHEET } } }] }),
+  });
+  sheetIds[PROFILE_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:B1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [['Age', 'HeightCm']] }),
+  });
 }
 
 async function loadSheetIds() {
@@ -85,9 +112,11 @@ async function loadSheetIds() {
 export async function ensureSpreadsheet() {
   if (spreadsheetId) {
     await loadSheetIds();
-    return spreadsheetId;
+  } else {
+    await findOrCreateSpreadsheet();
   }
-  return findOrCreateSpreadsheet();
+  await ensureProfileSheet();
+  return spreadsheetId;
 }
 
 /**
@@ -167,6 +196,24 @@ export async function deleteRows(sheetName, rows) {
   });
 }
 
+export async function fetchProfile() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:B2`);
+  const [age, heightCm] = (result.values || [])[0] || [];
+  return {
+    age: age !== undefined && age !== '' ? parseFloat(age) : null,
+    heightCm: heightCm !== undefined && heightCm !== '' ? parseFloat(heightCm) : null,
+  };
+}
+
+export async function putProfile(age, heightCm) {
+  const id = await ensureSpreadsheet();
+  await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:B2?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [[age, heightCm]] }),
+  });
+}
+
 export async function clearAndWrite(sheetName, headerColumns, rows) {
   const id = await ensureSpreadsheet();
   const lastCol = String.fromCharCode('A'.charCodeAt(0) + headerColumns - 1);
@@ -179,4 +226,4 @@ export async function clearAndWrite(sheetName, headerColumns, rows) {
   }
 }
 
-export const SHEET_NAMES = { WEIGHT: WEIGHT_SHEET, FOOD: FOOD_SHEET };
+export const SHEET_NAMES = { WEIGHT: WEIGHT_SHEET, FOOD: FOOD_SHEET, PROFILE: PROFILE_SHEET };

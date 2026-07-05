@@ -47,6 +47,23 @@
         <p id="sync-message" class="message" role="status"></p>
       </section>
 
+      <section class="stat-grid">
+        <div class="stat-tile">
+          <div class="stat-label">BMI</div>
+          <div class="stat-value" id="bmi-value">—</div>
+          <div class="stat-sub" id="bmi-sub"></div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">7-day trend</div>
+          <div class="stat-value" id="trend-7-value">—</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">30-day trend</div>
+          <div class="stat-value" id="trend-30-value">—</div>
+        </div>
+        <div class="stat-tile stat-tile-empty"></div>
+      </section>
+
       <section class="card">
         <h2>Weight over time</h2>
         <canvas id="weightChart"></canvas>

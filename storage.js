@@ -5,6 +5,8 @@ import {
   appendFoodRow,
   deleteRows,
   clearAndWrite,
+  fetchProfile,
+  putProfile,
   SHEET_NAMES,
 } from './sheets-api.js';
 
@@ -46,6 +48,72 @@ export function dateRangeInclusive(startKey, endKey) {
 export function dayTotal(entry) {
   if (!entry || !Array.isArray(entry.foods)) return 0;
   return entry.foods.reduce((sum, f) => sum + (Number(f.kcal) || 0), 0);
+}
+
+function shiftDateKey(dateKey, deltaDays) {
+  const d = new Date(dateKey + 'T00:00:00');
+  d.setDate(d.getDate() + deltaDays);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export async function getProfile() {
+  return fetchProfile();
+}
+
+export async function saveProfile(age, heightCm) {
+  await putProfile(age, heightCm);
+}
+
+export function computeBmi(weightKg, heightCm) {
+  if (!isFiniteNumber(weightKg) || !isFiniteNumber(heightCm) || heightCm <= 0) return null;
+  const heightM = heightCm / 100;
+  return weightKg / (heightM * heightM);
+}
+
+export function bmiCategory(bmi) {
+  if (!Number.isFinite(bmi)) return null;
+  if (bmi < 18.5) return 'Underweight';
+  if (bmi < 25) return 'Normal';
+  if (bmi < 30) return 'Overweight';
+  return 'Obese';
+}
+
+/**
+ * The most recent date with a logged weight, regardless of which date the
+ * carousel currently has selected.
+ */
+export function latestWeightEntry(entries) {
+  const dates = Object.keys(entries)
+    .filter((d) => entries[d].weightKg !== undefined)
+    .sort();
+  if (dates.length === 0) return null;
+  const date = dates[dates.length - 1];
+  return { date, weightKg: entries[date].weightKg };
+}
+
+/**
+ * Change in weight between the latest logged entry and the closest entry
+ * on or before (latest - days). Returns null if there isn't enough history.
+ */
+export function weightTrend(entries, days) {
+  const latest = latestWeightEntry(entries);
+  if (!latest) return null;
+
+  const targetKey = shiftDateKey(latest.date, -days);
+  const candidates = Object.keys(entries)
+    .filter((d) => entries[d].weightKg !== undefined && d <= targetKey)
+    .sort();
+  if (candidates.length === 0) return null;
+
+  const fromDate = candidates[candidates.length - 1];
+  return {
+    deltaKg: latest.weightKg - entries[fromDate].weightKg,
+    fromDate,
+    toDate: latest.date,
+  };
 }
 
 export async function loadData() {

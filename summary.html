@@ -31,6 +31,16 @@
 
     <div id="app-content" hidden>
       <section class="card">
+        <h2>Profile</h2>
+        <form id="profile-form" class="inline-form">
+          <input type="number" id="profile-age-input" step="1" min="1" max="120" placeholder="Age" inputmode="numeric" />
+          <input type="number" id="profile-height-input" step="0.1" min="50" max="272" placeholder="Height (cm)" inputmode="decimal" />
+          <button type="submit">Save profile</button>
+        </form>
+        <p id="profile-message" class="message" role="status"></p>
+      </section>
+
+      <section class="card">
         <h2>History</h2>
         <div class="table-wrap">
           <table id="history-table">

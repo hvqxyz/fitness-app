@@ -7,6 +7,8 @@ import {
   applyImportedData,
   getSelectedDate,
   setSelectedDate,
+  getProfile,
+  saveProfile,
 } from './storage.js';
 import { initAuthGate } from './auth-ui.js';
 
@@ -16,6 +18,10 @@ const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
 const importFile = document.getElementById('import-file');
 const backupMessage = document.getElementById('backup-message');
+const profileForm = document.getElementById('profile-form');
+const profileAgeInput = document.getElementById('profile-age-input');
+const profileHeightInput = document.getElementById('profile-height-input');
+const profileMessage = document.getElementById('profile-message');
 
 let historyLimit = 30;
 
@@ -23,6 +29,34 @@ function setBackupMessage(text, type) {
   backupMessage.textContent = text;
   backupMessage.className = `message ${type || ''}`.trim();
 }
+
+function setProfileMessage(text, type) {
+  profileMessage.textContent = text;
+  profileMessage.className = `message ${type || ''}`.trim();
+}
+
+async function renderProfile() {
+  try {
+    const profile = await getProfile();
+    profileAgeInput.value = profile.age ?? '';
+    profileHeightInput.value = profile.heightCm ?? '';
+  } catch (err) {
+    setProfileMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
+  }
+}
+
+profileForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const age = parseFloat(profileAgeInput.value);
+  const heightCm = parseFloat(profileHeightInput.value);
+  if (!Number.isFinite(age) || !Number.isFinite(heightCm)) return;
+  try {
+    await saveProfile(age, heightCm);
+    setProfileMessage('Profile saved.', 'success');
+  } catch (err) {
+    setProfileMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+  }
+});
 
 async function renderHistory() {
   try {
@@ -130,4 +164,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-initAuthGate(renderHistory);
+initAuthGate(() => Promise.all([renderHistory(), renderProfile()]));

@@ -3,6 +3,11 @@ import {
   upsertWeight,
   getSelectedDate,
   setSelectedDate,
+  getProfile,
+  computeBmi,
+  bmiCategory,
+  latestWeightEntry,
+  weightTrend,
 } from './storage.js';
 import { createDateCarousel } from './date-carousel.js';
 import { initAuthGate } from './auth-ui.js';
@@ -11,6 +16,10 @@ const dateCarouselEl = document.getElementById('date-carousel');
 const weightForm = document.getElementById('weight-form');
 const weightInput = document.getElementById('weight-input');
 const syncMessage = document.getElementById('sync-message');
+const bmiValueEl = document.getElementById('bmi-value');
+const bmiSubEl = document.getElementById('bmi-sub');
+const trend7ValueEl = document.getElementById('trend-7-value');
+const trend30ValueEl = document.getElementById('trend-30-value');
 
 let selectedDate = getSelectedDate();
 let weightChart = null;
@@ -20,11 +29,36 @@ function showSyncMessage(text, type) {
   syncMessage.className = `message ${type || ''}`.trim();
 }
 
-async function renderChart() {
-  const data = await loadData();
-  const dates = Object.keys(data.entries).sort();
+function formatTrend(trend) {
+  if (!trend) return '—';
+  const rounded = Math.round(Math.abs(trend.deltaKg) * 10) / 10;
+  if (rounded === 0) return '→ 0 kg';
+  const arrow = trend.deltaKg > 0 ? '↑' : '↓';
+  return `${arrow} ${rounded} kg`;
+}
+
+async function renderStats(entries) {
+  const profile = await getProfile();
+  const latest = latestWeightEntry(entries);
+  const bmi = latest ? computeBmi(latest.weightKg, profile.heightCm) : null;
+
+  if (bmi !== null) {
+    bmiValueEl.textContent = bmi.toFixed(1);
+    bmiSubEl.textContent = bmiCategory(bmi) || '';
+  } else {
+    bmiValueEl.textContent = '—';
+    bmiSubEl.textContent = profile.heightCm ? 'Log a weight' : 'Set height in Summary';
+  }
+
+  trend7ValueEl.textContent = formatTrend(weightTrend(entries, 7));
+  trend30ValueEl.textContent = formatTrend(weightTrend(entries, 30));
+}
+
+async function renderChart(data) {
+  const resolvedData = data || (await loadData());
+  const dates = Object.keys(resolvedData.entries).sort();
   const ctx = document.getElementById("weightChart");
-  const points = dates.map((date) => data.entries[date]?.weightKg ?? null);
+  const points = dates.map((date) => resolvedData.entries[date]?.weightKg ?? null);
 
   if (weightChart) {
     weightChart.destroy();
@@ -57,7 +91,8 @@ async function render() {
     const data = await loadData();
     const entry = data.entries[selectedDate] || {};
     weightInput.value = entry.weightKg !== undefined ? entry.weightKg : '';
-    await renderChart();
+    await renderChart(data);
+    await renderStats(data.entries);
     showSyncMessage('', '');
   } catch (err) {
     showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
