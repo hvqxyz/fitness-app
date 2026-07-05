@@ -9,6 +9,7 @@
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -22,25 +23,35 @@
   </nav>
 
   <main>
-    <section class="card date-carousel" id="date-carousel">
-      <input type="date" class="date-fallback" aria-label="Jump to date" />
-      <button type="button" class="date-nav prev" aria-label="Previous day">‹</button>
-      <div class="date-strip"></div>
-      <button type="button" class="date-nav next" aria-label="Next day">›</button>
+    <section class="card sign-in-card" id="sign-in-card" hidden>
+      <h2>Sign in required</h2>
+      <p>Your data lives in a Google Sheet. Sign in with Google to load it.</p>
+      <button type="button" id="sign-in-btn">Sign in with Google</button>
+      <p id="auth-message" class="message" role="status"></p>
     </section>
 
-    <section class="card">
-      <h2>Weight</h2>
-      <form id="weight-form" class="inline-form">
-        <input type="number" id="weight-input" step="0.1" min="20" max="400" placeholder="kg" inputmode="decimal" required />
-        <button type="submit">Save weight</button>
-      </form>
-    </section>
+    <div id="app-content" hidden>
+      <section class="card date-carousel" id="date-carousel">
+        <input type="date" class="date-fallback" aria-label="Jump to date" />
+        <button type="button" class="date-nav prev" aria-label="Previous day">‹</button>
+        <div class="date-strip"></div>
+        <button type="button" class="date-nav next" aria-label="Next day">›</button>
+      </section>
 
-    <section class="card">
-      <h2>Weight over time</h2>
-      <canvas id="weightChart"></canvas>
-    </section>
+      <section class="card">
+        <h2>Weight</h2>
+        <form id="weight-form" class="inline-form">
+          <input type="number" id="weight-input" step="0.1" min="20" max="400" placeholder="kg" inputmode="decimal" required />
+          <button type="submit">Save weight</button>
+        </form>
+        <p id="sync-message" class="message" role="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Weight over time</h2>
+        <canvas id="weightChart"></canvas>
+      </section>
+    </div>
   </main>
 
   <script type="module" src="weight.js"></script>

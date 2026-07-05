@@ -90,6 +90,16 @@ main {
   margin: 0 auto;
 }
 
+#app-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#app-content[hidden] {
+  display: none;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

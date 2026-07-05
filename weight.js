@@ -5,16 +5,23 @@ import {
   setSelectedDate,
 } from './storage.js';
 import { createDateCarousel } from './date-carousel.js';
+import { initAuthGate } from './auth-ui.js';
 
 const dateCarouselEl = document.getElementById('date-carousel');
 const weightForm = document.getElementById('weight-form');
 const weightInput = document.getElementById('weight-input');
+const syncMessage = document.getElementById('sync-message');
 
 let selectedDate = getSelectedDate();
 let weightChart = null;
 
-function renderChart() {
-  const data = loadData();
+function showSyncMessage(text, type) {
+  syncMessage.textContent = text;
+  syncMessage.className = `message ${type || ''}`.trim();
+}
+
+async function renderChart() {
+  const data = await loadData();
   const dates = Object.keys(data.entries).sort();
   const ctx = document.getElementById("weightChart");
   const points = dates.map((date) => data.entries[date]?.weightKg ?? null);
@@ -45,31 +52,43 @@ function renderChart() {
   });
 }
 
-function render() {
-  const data = loadData();
-  const entry = data.entries[selectedDate] || {};
-  weightInput.value = entry.weightKg !== undefined ? entry.weightKg : '';
-  renderChart();
+async function render() {
+  try {
+    const data = await loadData();
+    const entry = data.entries[selectedDate] || {};
+    weightInput.value = entry.weightKg !== undefined ? entry.weightKg : '';
+    await renderChart();
+    showSyncMessage('', '');
+  } catch (err) {
+    showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
+  }
 }
 
-createDateCarousel(dateCarouselEl, selectedDate, (newDate) => {
-  selectedDate = newDate;
-  setSelectedDate(newDate);
-  render();
-});
+function boot() {
+  createDateCarousel(dateCarouselEl, selectedDate, (newDate) => {
+    selectedDate = newDate;
+    setSelectedDate(newDate);
+    render();
+  });
+  return render();
+}
 
-weightForm.addEventListener('submit', (e) => {
+weightForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const value = parseFloat(weightInput.value);
   if (!Number.isFinite(value)) return;
-  upsertWeight(selectedDate, value);
-  render();
+  try {
+    await upsertWeight(selectedDate, value);
+    await render();
+  } catch (err) {
+    showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+  }
 });
 
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(renderChart, 150);
+  resizeTimer = setTimeout(() => renderChart().catch(() => {}), 150);
 });
 
 if ('serviceWorker' in navigator) {
@@ -79,4 +98,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-render();
+initAuthGate(boot);

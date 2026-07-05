@@ -1,28 +1,15 @@
-const STORAGE_KEY = 'fitness-counter-data';
+import {
+  fetchEntries,
+  putWeightRow,
+  appendWeightRow,
+  appendFoodRow,
+  deleteRows,
+  clearAndWrite,
+  SHEET_NAMES,
+} from './sheets-api.js';
+
 const CURRENT_VERSION = 1;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function emptyData() {
-  return { version: CURRENT_VERSION, entries: {} };
-}
-
-export function loadData() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return emptyData();
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || typeof parsed.entries !== 'object') {
-      return emptyData();
-    }
-    return parsed;
-  } catch {
-    return emptyData();
-  }
-}
-
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
 
 export function todayKey() {
   const d = new Date();
@@ -61,53 +48,61 @@ export function dayTotal(entry) {
   return entry.foods.reduce((sum, f) => sum + (Number(f.kcal) || 0), 0);
 }
 
-export function upsertWeight(date, weightKg) {
-  const data = loadData();
-  const entry = data.entries[date] || {};
-  entry.weightKg = weightKg;
-  data.entries[date] = entry;
-  saveData(data);
-  return data;
+export async function loadData() {
+  const entries = await fetchEntries();
+  return { version: CURRENT_VERSION, entries };
 }
 
-export function addFood(date, name, kcal) {
-  const data = loadData();
-  const entry = data.entries[date] || {};
-  if (!Array.isArray(entry.foods)) entry.foods = [];
-  entry.foods.push({ name, kcal });
-  data.entries[date] = entry;
-  saveData(data);
-  return data;
-}
-
-export function deleteFood(date, index) {
-  const data = loadData();
-  const entry = data.entries[date];
-  if (!entry || !Array.isArray(entry.foods)) return data;
-  entry.foods.splice(index, 1);
-  if (entry.foods.length === 0) delete entry.foods;
-  if (entry.weightKg === undefined && !entry.foods) {
-    delete data.entries[date];
+export async function upsertWeight(date, weightKg) {
+  const entries = await fetchEntries();
+  const existingRow = entries[date]?._weightRow;
+  if (existingRow) {
+    await putWeightRow(existingRow, date, weightKg);
+  } else {
+    await appendWeightRow(date, weightKg);
   }
-  saveData(data);
-  return data;
 }
 
-export function deleteDay(date) {
-  const data = loadData();
-  delete data.entries[date];
-  saveData(data);
-  return data;
+export async function addFood(date, name, kcal) {
+  await appendFoodRow(date, name, kcal);
 }
 
-export function exportToFile() {
-  const raw = localStorage.getItem(STORAGE_KEY) || JSON.stringify(emptyData());
-  const blob = new Blob([raw], { type: 'application/json' });
+export async function deleteFood(date, index) {
+  const entries = await fetchEntries();
+  const food = entries[date]?.foods?.[index];
+  if (!food) return;
+  await deleteRows(SHEET_NAMES.FOOD, [food._row]);
+}
+
+export async function deleteDay(date) {
+  const entries = await fetchEntries();
+  const entry = entries[date];
+  if (!entry) return;
+  const foodRows = Array.isArray(entry.foods) ? entry.foods.map((f) => f._row) : [];
+  await deleteRows(SHEET_NAMES.FOOD, foodRows);
+  if (entry._weightRow) {
+    await deleteRows(SHEET_NAMES.WEIGHT, [entry._weightRow]);
+  }
+}
+
+export async function exportToFile() {
+  const entries = await fetchEntries();
+  const clean = {};
+  for (const [date, entry] of Object.entries(entries)) {
+    clean[date] = {};
+    if (entry.weightKg !== undefined) clean[date].weightKg = entry.weightKg;
+    if (Array.isArray(entry.foods)) {
+      clean[date].foods = entry.foods.map((f) => ({ name: f.name, kcal: f.kcal }));
+    }
+  }
+
+  const blob = new Blob([JSON.stringify({ version: CURRENT_VERSION, entries: clean })], {
+    type: 'application/json',
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const today = todayKey();
   a.href = url;
-  a.download = `fitness-counter-export-${today}.json`;
+  a.download = `fitness-counter-export-${todayKey()}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -159,7 +154,18 @@ export function parseImportFile(jsonString) {
   return { version: CURRENT_VERSION, entries: parsed.entries };
 }
 
-export function applyImportedData(data) {
-  saveData(data);
-  return data;
+/**
+ * Replaces all rows in both tabs with the imported entries.
+ */
+export async function applyImportedData(data) {
+  const weightRows = [];
+  const foodRows = [];
+  for (const [date, entry] of Object.entries(data.entries)) {
+    if (entry.weightKg !== undefined) weightRows.push([date, entry.weightKg]);
+    if (Array.isArray(entry.foods)) {
+      entry.foods.forEach((f) => foodRows.push([date, f.name, f.kcal]));
+    }
+  }
+  await clearAndWrite(SHEET_NAMES.WEIGHT, 2, weightRows);
+  await clearAndWrite(SHEET_NAMES.FOOD, 3, foodRows);
 }
