@@ -485,6 +485,17 @@ button:active {
   display: block;
 }
 
+.calorie-ring-canvas {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 0.25rem auto 0.85rem;
+}
+
+.calorie-ring-canvas[hidden] {
+  display: none;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

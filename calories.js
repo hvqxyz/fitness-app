@@ -15,7 +15,7 @@ import {
   MEAL_TYPES,
   DEFAULT_MEAL,
 } from './storage.js';
-import { drawLineChart } from './charts.js';
+import { drawLineChart, drawProgressRing } from './charts.js';
 import { createDateCarousel } from './date-carousel.js';
 import { createFoodSearch } from './food-search.js';
 import { initAuthGate } from './auth-ui.js';
@@ -23,7 +23,7 @@ import { initAuthGate } from './auth-ui.js';
 const dateCarouselEl = document.getElementById('date-carousel');
 const mealSectionsEl = document.getElementById('meal-sections');
 const foodTotalEl = document.getElementById('food-total');
-const targetSummaryEl = document.getElementById('target-summary');
+const calorieRingCanvas = document.getElementById('calorie-ring');
 const macroSummaryEl = document.getElementById('macro-summary');
 const macroTargetSummaryEl = document.getElementById('macro-target-summary');
 const caloriesChartCanvas = document.getElementById('calories-chart');
@@ -125,6 +125,24 @@ function formatMacro(value) {
   return Math.round(value * 10) / 10;
 }
 
+let lastTotalKcal = 0;
+
+function renderCalorieRing(totalKcal) {
+  lastTotalKcal = totalKcal;
+  if (!profile.targetKcal) {
+    calorieRingCanvas.hidden = true;
+    return;
+  }
+  calorieRingCanvas.hidden = false;
+  const percent = Math.round((totalKcal / profile.targetKcal) * 100);
+  drawProgressRing(calorieRingCanvas, {
+    value: totalKcal,
+    max: profile.targetKcal,
+    label: Math.round(totalKcal).toLocaleString(),
+    sublabel: `of ${profile.targetKcal.toLocaleString()} (${percent}%)`,
+  });
+}
+
 async function render() {
   try {
     const data = await loadData();
@@ -168,13 +186,7 @@ async function render() {
 
     const totalKcal = dayTotal(entry);
     foodTotalEl.textContent = Math.round(totalKcal).toLocaleString();
-
-    if (profile.targetKcal) {
-      const percentOfTarget = Math.round((totalKcal / profile.targetKcal) * 100);
-      targetSummaryEl.textContent = `Target: ${profile.targetKcal.toLocaleString()} kcal (${percentOfTarget}% so far)`;
-    } else {
-      targetSummaryEl.textContent = '';
-    }
+    renderCalorieRing(totalKcal);
 
     const macros = dayMacros(entry);
     macroSummaryEl.textContent =
@@ -227,7 +239,10 @@ async function boot() {
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => renderChart().catch(() => {}), 150);
+  resizeTimer = setTimeout(() => {
+    renderChart().catch(() => {});
+    renderCalorieRing(lastTotalKcal);
+  }, 150);
 });
 
 if ('serviceWorker' in navigator) {
