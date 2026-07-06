@@ -25,7 +25,12 @@ const mealSectionsEl = document.getElementById('meal-sections');
 const foodTotalEl = document.getElementById('food-total');
 const calorieRingCanvas = document.getElementById('calorie-ring');
 const macroSummaryEl = document.getElementById('macro-summary');
-const macroTargetSummaryEl = document.getElementById('macro-target-summary');
+const macroRingsEl = document.getElementById('macro-rings');
+const macroRingConfigs = [
+  { key: 'proteinPercent', item: document.getElementById('protein-ring-item'), canvas: document.getElementById('protein-ring'), label: 'Protein' },
+  { key: 'carbsPercent', item: document.getElementById('carbs-ring-item'), canvas: document.getElementById('carbs-ring'), label: 'Carbs' },
+  { key: 'fatPercent', item: document.getElementById('fat-ring-item'), canvas: document.getElementById('fat-ring'), label: 'Fat' },
+];
 const caloriesChartCanvas = document.getElementById('calories-chart');
 const syncMessage = document.getElementById('sync-message');
 
@@ -143,6 +148,28 @@ function renderCalorieRing(totalKcal) {
   });
 }
 
+let lastMacroActuals = { proteinPercent: null, carbsPercent: null, fatPercent: null };
+
+function renderMacroRings(actual) {
+  lastMacroActuals = actual;
+  const anyTarget = macroRingConfigs.some((cfg) => profile[cfg.key]);
+  macroRingsEl.hidden = !anyTarget;
+  if (!anyTarget) return;
+
+  macroRingConfigs.forEach((cfg) => {
+    const targetPct = profile[cfg.key];
+    cfg.item.hidden = !targetPct;
+    if (!targetPct) return;
+    const actualPct = actual[cfg.key];
+    drawProgressRing(cfg.canvas, {
+      value: actualPct ?? 0,
+      max: targetPct,
+      label: actualPct === null ? '—' : `${Math.round(actualPct)}%`,
+      sublabel: `of ${targetPct}%`,
+    });
+  });
+}
+
 async function render() {
   try {
     const data = await loadData();
@@ -194,21 +221,7 @@ async function render() {
       `Sat Fat ${formatMacro(macros.satFat)}g · Unsat Fat ${formatMacro(macros.unsatFat)}g · ` +
       `Protein ${formatMacro(macros.protein)}g`;
 
-    if (profile.proteinPercent || profile.carbsPercent || profile.fatPercent) {
-      const actual = macroPercentages(entry);
-      const vsTarget = (label, actualPct, targetPct) => {
-        if (!targetPct) return null;
-        const shown = actualPct === null ? '—' : `${Math.round(actualPct)}%`;
-        return `${label} ${shown} (target ${targetPct}%)`;
-      };
-      macroTargetSummaryEl.textContent = [
-        vsTarget('Protein', actual.proteinPercent, profile.proteinPercent),
-        vsTarget('Carbs', actual.carbsPercent, profile.carbsPercent),
-        vsTarget('Fat', actual.fatPercent, profile.fatPercent),
-      ].filter(Boolean).join(' · ');
-    } else {
-      macroTargetSummaryEl.textContent = '';
-    }
+    renderMacroRings(macroPercentages(entry));
 
     await renderChart();
     showSyncMessage('', '');
@@ -242,6 +255,7 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => {
     renderChart().catch(() => {});
     renderCalorieRing(lastTotalKcal);
+    renderMacroRings(lastMacroActuals);
   }, 150);
 });
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitness-counter-v16';
+const CACHE_NAME = 'fitness-counter-v17';
 const APP_SHELL = [
   './',
   './index.html',
