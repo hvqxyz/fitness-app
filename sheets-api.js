@@ -13,6 +13,7 @@ const INGREDIENTS_SHEET = 'Ingredients';
 
 const FOOD_HEADER = ['Date', 'Name', 'Kcal', 'Meal', 'WeightG', 'Fiber', 'Carbs', 'SatFat', 'UnsatFat', 'Protein'];
 const INGREDIENTS_HEADER = ['Name', 'KcalPer100g', 'FiberPer100g', 'CarbsPer100g', 'SatFatPer100g', 'UnsatFatPer100g', 'ProteinPer100g'];
+const PROFILE_HEADER = ['Age', 'HeightCm', 'TargetKcal', 'ProteinPercent', 'CarbsPercent', 'FatPercent'];
 
 let spreadsheetId = localStorage.getItem(SPREADSHEET_ID_KEY);
 let sheetIds = null; // { Weight: <numeric id>, Food: <numeric id> }
@@ -78,9 +79,9 @@ async function findOrCreateSpreadsheet() {
     method: 'PUT',
     body: JSON.stringify({ values: [FOOD_HEADER] }),
   });
-  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:B1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:F1?valueInputOption=RAW`, {
     method: 'PUT',
-    body: JSON.stringify({ values: [['Age', 'HeightCm']] }),
+    body: JSON.stringify({ values: [PROFILE_HEADER] }),
   });
   await apiFetch(`${spreadsheetId}/values/${INGREDIENTS_SHEET}!A1:G1?valueInputOption=RAW`, {
     method: 'PUT',
@@ -102,9 +103,26 @@ async function ensureProfileSheet() {
   });
   sheetIds[PROFILE_SHEET] = result.replies[0].addSheet.properties.sheetId;
 
-  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:B1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:F1?valueInputOption=RAW`, {
     method: 'PUT',
-    body: JSON.stringify({ values: [['Age', 'HeightCm']] }),
+    body: JSON.stringify({ values: [PROFILE_HEADER] }),
+  });
+}
+
+let profileHeaderEnsured = false;
+
+/**
+ * Rewrites the Profile tab's header row for spreadsheets created before the
+ * calorie/macro-percent target columns existed. Those columns are always
+ * appended (never inserted), so existing Age/HeightCm cells are never
+ * shifted — this just backfills the header labels once per session.
+ */
+async function ensureProfileTargetsHeader() {
+  if (profileHeaderEnsured) return;
+  profileHeaderEnsured = true;
+  await apiFetch(`${spreadsheetId}/values/${PROFILE_SHEET}!A1:F1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [PROFILE_HEADER] }),
   });
 }
 
@@ -161,6 +179,7 @@ export async function ensureSpreadsheet() {
     await findOrCreateSpreadsheet();
   }
   await ensureProfileSheet();
+  await ensureProfileTargetsHeader();
   await ensureFoodMealHeader();
   await ensureIngredientsSheet();
   return spreadsheetId;
@@ -259,11 +278,16 @@ export async function deleteRows(sheetName, rows) {
 
 export async function fetchProfile() {
   const id = await ensureSpreadsheet();
-  const result = await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:B2`);
-  const [age, heightCm] = (result.values || [])[0] || [];
+  const result = await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:F2`);
+  const [age, heightCm, targetKcal, proteinPercent, carbsPercent, fatPercent] = (result.values || [])[0] || [];
+  const num = (v) => (v !== undefined && v !== '' ? parseFloat(v) : null);
   return {
-    age: age !== undefined && age !== '' ? parseFloat(age) : null,
-    heightCm: heightCm !== undefined && heightCm !== '' ? parseFloat(heightCm) : null,
+    age: num(age),
+    heightCm: num(heightCm),
+    targetKcal: num(targetKcal),
+    proteinPercent: num(proteinPercent),
+    carbsPercent: num(carbsPercent),
+    fatPercent: num(fatPercent),
   };
 }
 
@@ -272,6 +296,14 @@ export async function putProfile(age, heightCm) {
   await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:B2?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [[age, heightCm]] }),
+  });
+}
+
+export async function putTargets(targetKcal, proteinPercent, carbsPercent, fatPercent) {
+  const id = await ensureSpreadsheet();
+  await apiFetch(`${id}/values/${PROFILE_SHEET}!C2:F2?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [[targetKcal, proteinPercent, carbsPercent, fatPercent]] }),
   });
 }
 

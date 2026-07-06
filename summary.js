@@ -9,6 +9,7 @@ import {
   setSelectedDate,
   getProfile,
   saveProfile,
+  saveTargets,
   getIngredients,
   addIngredient,
   deleteIngredient,
@@ -35,6 +36,13 @@ const ingredientUnsatFatInput = document.getElementById('ingredient-unsatfat-inp
 const ingredientProteinInput = document.getElementById('ingredient-protein-input');
 const ingredientListEl = document.getElementById('ingredient-list');
 const ingredientMessage = document.getElementById('ingredient-message');
+const targetsForm = document.getElementById('targets-form');
+const targetKcalInput = document.getElementById('target-kcal-input');
+const targetProteinInput = document.getElementById('target-protein-input');
+const targetCarbsInput = document.getElementById('target-carbs-input');
+const targetFatInput = document.getElementById('target-fat-input');
+const targetsPercentHint = document.getElementById('targets-percent-hint');
+const targetsMessage = document.getElementById('targets-message');
 
 let historyLimit = 30;
 
@@ -68,6 +76,54 @@ profileForm.addEventListener('submit', async (e) => {
     setProfileMessage('Profile saved.', 'success');
   } catch (err) {
     setProfileMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
+  }
+});
+
+function setTargetsMessage(text, type) {
+  targetsMessage.textContent = text;
+  targetsMessage.className = `message ${type || ''}`.trim();
+}
+
+function updatePercentHint() {
+  const values = [targetProteinInput, targetCarbsInput, targetFatInput].map((input) => parseFloat(input.value) || 0);
+  const sum = values.reduce((a, b) => a + b, 0);
+  targetsPercentHint.textContent = sum > 0 ? `Adds up to ${sum}%${sum !== 100 ? ' (aim for 100%)' : ''}` : '';
+}
+
+[targetProteinInput, targetCarbsInput, targetFatInput].forEach((input) => {
+  input.addEventListener('input', updatePercentHint);
+});
+
+async function renderTargets() {
+  try {
+    const profile = await getProfile();
+    targetKcalInput.value = profile.targetKcal ?? '';
+    targetProteinInput.value = profile.proteinPercent ?? '';
+    targetCarbsInput.value = profile.carbsPercent ?? '';
+    targetFatInput.value = profile.fatPercent ?? '';
+    updatePercentHint();
+  } catch (err) {
+    setTargetsMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
+  }
+}
+
+targetsForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const targetKcal = parseFloat(targetKcalInput.value);
+  const proteinPercent = parseFloat(targetProteinInput.value);
+  const carbsPercent = parseFloat(targetCarbsInput.value);
+  const fatPercent = parseFloat(targetFatInput.value);
+  if (!Number.isFinite(targetKcal)) return;
+  try {
+    await saveTargets(
+      targetKcal,
+      Number.isFinite(proteinPercent) ? proteinPercent : 0,
+      Number.isFinite(carbsPercent) ? carbsPercent : 0,
+      Number.isFinite(fatPercent) ? fatPercent : 0,
+    );
+    setTargetsMessage('Targets saved.', 'success');
+  } catch (err) {
+    setTargetsMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
   }
 });
 
@@ -241,4 +297,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-initAuthGate(() => Promise.all([renderHistory(), renderProfile(), renderIngredients()]));
+initAuthGate(() => Promise.all([renderHistory(), renderProfile(), renderTargets(), renderIngredients()]));

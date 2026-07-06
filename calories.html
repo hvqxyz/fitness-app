@@ -29,6 +29,7 @@
       <p id="auth-message" class="message" role="status"></p>
     </section>
 
+
     <div id="app-content" hidden>
       <section class="card date-carousel" id="date-carousel">
         <input type="date" class="date-fallback" aria-label="Jump to date" />
@@ -37,13 +38,15 @@
         <button type="button" class="date-nav next" aria-label="Next day">›</button>
       </section>
 
-      <div id="meal-sections"></div>
-
       <section class="card">
         <p class="total-line">Today's total: <span id="food-total">0</span> kcal</p>
+        <p id="target-summary" class="ingredient-sub"></p>
         <p id="macro-summary" class="ingredient-sub"></p>
+        <p id="macro-target-summary" class="ingredient-sub"></p>
         <p id="sync-message" class="message" role="status"></p>
       </section>
+
+      <div id="meal-sections"></div>
 
       <section class="card">
         <h2>Calories over time</h2>

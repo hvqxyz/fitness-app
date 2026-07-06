@@ -41,6 +41,21 @@
       </section>
 
       <section class="card">
+        <h2>Targets</h2>
+        <form id="targets-form" class="ingredient-form">
+          <input type="number" id="target-kcal-input" placeholder="Target calories / day" step="1" min="0" inputmode="numeric" />
+          <div class="ingredient-grid">
+            <input type="number" id="target-protein-input" placeholder="Protein %" step="1" min="0" max="100" inputmode="numeric" />
+            <input type="number" id="target-carbs-input" placeholder="Carbs %" step="1" min="0" max="100" inputmode="numeric" />
+            <input type="number" id="target-fat-input" placeholder="Fat %" step="1" min="0" max="100" inputmode="numeric" />
+          </div>
+          <p id="targets-percent-hint" class="ingredient-sub"></p>
+          <button type="submit">Save targets</button>
+        </form>
+        <p id="targets-message" class="message" role="status"></p>
+      </section>
+
+      <section class="card">
         <h2>Food Database</h2>
         <form id="ingredient-form" class="ingredient-form">
           <input type="text" id="ingredient-name-input" placeholder="Food name" required />

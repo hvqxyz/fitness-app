@@ -3,12 +3,14 @@ import {
   todayKey,
   dayTotal,
   dayMacros,
+  macroPercentages,
   addFood,
   deleteFood,
   getSelectedDate,
   setSelectedDate,
   dateRangeInclusive,
   getIngredients,
+  getProfile,
   computeNutritionForWeight,
   MEAL_TYPES,
   DEFAULT_MEAL,
@@ -21,12 +23,15 @@ import { initAuthGate } from './auth-ui.js';
 const dateCarouselEl = document.getElementById('date-carousel');
 const mealSectionsEl = document.getElementById('meal-sections');
 const foodTotalEl = document.getElementById('food-total');
+const targetSummaryEl = document.getElementById('target-summary');
 const macroSummaryEl = document.getElementById('macro-summary');
+const macroTargetSummaryEl = document.getElementById('macro-target-summary');
 const caloriesChartCanvas = document.getElementById('calories-chart');
 const syncMessage = document.getElementById('sync-message');
 
 let selectedDate = getSelectedDate();
 let ingredients = [];
+let profile = { targetKcal: null, proteinPercent: null, carbsPercent: null, fatPercent: null };
 const mealRefs = {};
 
 MEAL_TYPES.forEach((meal) => {
@@ -161,13 +166,37 @@ async function render() {
       subtotalEl.textContent = Math.round(subtotal).toLocaleString();
     });
 
-    foodTotalEl.textContent = Math.round(dayTotal(entry)).toLocaleString();
+    const totalKcal = dayTotal(entry);
+    foodTotalEl.textContent = Math.round(totalKcal).toLocaleString();
+
+    if (profile.targetKcal) {
+      const percentOfTarget = Math.round((totalKcal / profile.targetKcal) * 100);
+      targetSummaryEl.textContent = `Target: ${profile.targetKcal.toLocaleString()} kcal (${percentOfTarget}% so far)`;
+    } else {
+      targetSummaryEl.textContent = '';
+    }
 
     const macros = dayMacros(entry);
     macroSummaryEl.textContent =
       `Fiber ${formatMacro(macros.fiber)}g · Carbs ${formatMacro(macros.carbs)}g · ` +
       `Sat Fat ${formatMacro(macros.satFat)}g · Unsat Fat ${formatMacro(macros.unsatFat)}g · ` +
       `Protein ${formatMacro(macros.protein)}g`;
+
+    if (profile.proteinPercent || profile.carbsPercent || profile.fatPercent) {
+      const actual = macroPercentages(entry);
+      const vsTarget = (label, actualPct, targetPct) => {
+        if (!targetPct) return null;
+        const shown = actualPct === null ? '—' : `${Math.round(actualPct)}%`;
+        return `${label} ${shown} (target ${targetPct}%)`;
+      };
+      macroTargetSummaryEl.textContent = [
+        vsTarget('Protein', actual.proteinPercent, profile.proteinPercent),
+        vsTarget('Carbs', actual.carbsPercent, profile.carbsPercent),
+        vsTarget('Fat', actual.fatPercent, profile.fatPercent),
+      ].filter(Boolean).join(' · ');
+    } else {
+      macroTargetSummaryEl.textContent = '';
+    }
 
     await renderChart();
     showSyncMessage('', '');
@@ -185,6 +214,7 @@ async function boot() {
 
   try {
     ingredients = await getIngredients();
+    profile = await getProfile();
   } catch (err) {
     showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
     ingredients = [];
