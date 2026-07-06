@@ -85,19 +85,24 @@ export async function saveTargets(targetKcal, proteinPercent, carbsPercent, fatP
 }
 
 /**
- * Percentage of a day's logged calories coming from protein/carbs/fat,
- * using 4 kcal/g for protein & carbs and 9 kcal/g for fat (sat + unsat
- * combined). Returns null fields when there's nothing logged yet.
+ * Percentage of a day's calories coming from protein/carbs/fat, using the
+ * standard 4 kcal/g for protein & carbs and 9 kcal/g for fat (sat + unsat
+ * combined). The denominator is calories *derived from those same macros*,
+ * not the separately-logged Kcal total — a food's entered Kcal/100g can be
+ * inconsistent with its macro grams (e.g. a typo in the Food Database), and
+ * dividing by that mismatched total is what let percentages read like
+ * 147%/210%/442% instead of summing to ~100%. Returns null fields when
+ * there's nothing logged yet.
  */
 export function macroPercentages(entry) {
-  const totalKcal = dayTotal(entry);
-  if (!totalKcal) return { proteinPercent: null, carbsPercent: null, fatPercent: null };
   const macros = dayMacros(entry);
   const fatGrams = macros.satFat + macros.unsatFat;
+  const kcalFromMacros = macros.protein * 4 + macros.carbs * 4 + fatGrams * 9;
+  if (!kcalFromMacros) return { proteinPercent: null, carbsPercent: null, fatPercent: null };
   return {
-    proteinPercent: (macros.protein * 4 * 100) / totalKcal,
-    carbsPercent: (macros.carbs * 4 * 100) / totalKcal,
-    fatPercent: (fatGrams * 9 * 100) / totalKcal,
+    proteinPercent: (macros.protein * 4 * 100) / kcalFromMacros,
+    carbsPercent: (macros.carbs * 4 * 100) / kcalFromMacros,
+    fatPercent: (fatGrams * 9 * 100) / kcalFromMacros,
   };
 }
 
