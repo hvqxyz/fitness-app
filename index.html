@@ -2,82 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Fitness Counter — Weight</title>
-  <meta name="theme-color" content="#2a78d6" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <meta http-equiv="refresh" content="0; url=weight/index.html" />
+  <title>Fitness Counter</title>
 </head>
 <body>
-  <header class="app-header">
-    <h1>Fitness Counter</h1>
-  </header>
-
-  <nav class="tabs" role="tablist">
-    <a class="tab-btn" role="tab" aria-selected="true" href="index.html">Weight</a>
-    <a class="tab-btn" role="tab" aria-selected="false" href="calories.html">Calories</a>
-    <a class="tab-btn" role="tab" aria-selected="false" href="summary.html">Summary</a>
-  </nav>
-
-  <main>
-    <section class="card sign-in-card" id="sign-in-card" hidden>
-      <h2>Sign in required</h2>
-      <p>Your data lives in a Google Sheet. Sign in with Google to load it.</p>
-      <button type="button" id="sign-in-btn">Sign in with Google</button>
-      <p id="auth-message" class="message" role="status"></p>
-    </section>
-
-    <div id="app-content" hidden>
-      <section class="card date-carousel" id="date-carousel">
-        <input type="date" class="date-fallback" aria-label="Jump to date" />
-        <button type="button" class="date-nav prev" aria-label="Previous day">‹</button>
-        <div class="date-strip"></div>
-        <button type="button" class="date-nav next" aria-label="Next day">›</button>
-      </section>
-
-      <section class="card">
-        <h2>Weight</h2>
-        <form id="weight-form" class="inline-form">
-          <input type="number" id="weight-input" step="0.1" min="20" max="400" placeholder="kg" inputmode="decimal" required />
-          <button type="submit">Save weight</button>
-        </form>
-        <p id="sync-message" class="message" role="status"></p>
-      </section>
-
-      <section class="stat-grid">
-        <div class="stat-tile">
-          <div class="stat-label">BMI</div>
-          <div class="stat-value" id="bmi-value">—</div>
-          <div class="stat-sub" id="bmi-sub"></div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-label">7-day trend</div>
-          <div class="stat-value" id="trend-7-value">—</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-label">30-day trend</div>
-          <div class="stat-value" id="trend-30-value">—</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-label">30-day Mean deviation</div>
-          <div class="stat-value" id="mean-deviation">—</div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Weight over time</h2>
-        <div class="range-toggle" id="chart-range-toggle">
-          <button type="button" class="range-btn" data-range="7" aria-pressed="false">7 days</button>
-          <button type="button" class="range-btn" data-range="30" aria-pressed="true">30 days</button>
-        </div>
-        <canvas id="weightChart"></canvas>
-      </section>
-    </div>
-  </main>
-
-  <script type="module" src="weight.js"></script>
+  <script>location.replace('weight/index.html');</script>
 </body>
 </html>

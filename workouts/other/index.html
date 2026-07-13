@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Fitness Counter — Other</title>
+  <meta name="theme-color" content="#2a78d6" />
+  <link rel="manifest" href="../../manifest.webmanifest" />
+  <link rel="icon" href="../../icons/icon-192.png" />
+  <link rel="stylesheet" href="../../common/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div id="app-header-slot"></div>
+  <script src="../../common/app-header.js"></script>
+
+  <nav class="tabs" role="tablist">
+    <a class="tab-btn" role="tab" aria-selected="false" href="../../weight/index.html">Weight</a>
+    <a class="tab-btn" role="tab" aria-selected="false" href="../../calories/index.html">Calories</a>
+    <a class="tab-btn" role="tab" aria-selected="false" href="../../summary/index.html">Summary</a>
+    <a class="tab-btn" role="tab" aria-selected="true" href="../../workouts/running/index.html">Workouts</a>
+    <a class="tab-btn" role="tab" aria-selected="false" href="../../performance/index.html">Performance</a>
+  </nav>
+
+  <main>
+    <section class="card sign-in-card" id="sign-in-card" hidden>
+      <h2>Sign in required</h2>
+      <p>Your data lives in a Google Sheet. Sign in with Google to load it.</p>
+      <button type="button" id="sign-in-btn" class="button">Sign in with Google</button>
+      <p id="auth-message" class="message" role="status"></p>
+    </section>
+
+    <div id="app-content" hidden>
+      <section class="card date-carousel" id="date-carousel">
+        <input type="date" class="date-fallback" aria-label="Jump to date" />
+        <button type="button" class="button date-nav prev" aria-label="Previous day">‹</button>
+        <div class="date-strip"></div>
+        <button type="button" class="button date-nav next" aria-label="Next day">›</button>
+      </section>
+
+      <div id="workout-shared"></div>
+    </div>
+  </main>
+
+  <script type="module" src="../shared.js"></script>
+</body>
+</html>

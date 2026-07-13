@@ -1,22 +1,35 @@
-const CACHE_NAME = 'fitness-counter-v18';
+const CACHE_NAME = 'fitness-counter-v65';
 const APP_SHELL = [
   './',
   './index.html',
-  './calories.html',
-  './summary.html',
-  './style.css',
-  './weight.js',
-  './calories.js',
-  './summary.js',
-  './storage.js',
-  './charts.js',
-  './date-carousel.js',
-  './food-search.js',
-  './config.js',
-  './auth.js',
-  './auth-ui.js',
-  './sheets-api.js',
-  './drive-api.js',
+  './weight/index.html',
+  './weight/weight.js',
+  './calories/index.html',
+  './calories/calories.js',
+  './summary/index.html',
+  './summary/summary.js',
+  './profile/index.html',
+  './profile/profile.js',
+  './workouts/running/index.html',
+  './workouts/gym/index.html',
+  './workouts/other/index.html',
+  './workouts/shared.js',
+  './performance/index.html',
+  './performance/performance.js',
+  './common/style.css',
+  './common/app-header.js',
+  './common/storage.js',
+  './common/charts.js',
+  './common/workout-chart.js',
+  './common/workout-list.js',
+  './common/date-carousel.js',
+  './common/week-carousel.js',
+  './common/food-search.js',
+  './common/config.js',
+  './common/auth.js',
+  './common/auth-ui.js',
+  './common/sheets-api.js',
+  './common/drive-api.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -58,7 +71,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
+            return caches.match('./weight/index.html');
           }
           return Response.error();
         });

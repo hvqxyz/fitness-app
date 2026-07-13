@@ -40,7 +40,7 @@ export function createDateCarousel(container, initialDate, onChange) {
 
       const pill = document.createElement('button');
       pill.type = 'button';
-      pill.className = 'date-pill';
+      pill.className = 'button date-pill';
       if (key === todayKey) pill.classList.add('today');
       if (key > todayKey) pill.classList.add('future');
       if (key === selected) pill.classList.add('selected');

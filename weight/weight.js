@@ -12,9 +12,9 @@ import {
   todayKey,
   shiftDateKey,
   dateRangeInclusive,
-} from './storage.js';
-import { createDateCarousel } from './date-carousel.js';
-import { initAuthGate } from './auth-ui.js';
+} from '../common/storage.js';
+import { createDateCarousel } from '../common/date-carousel.js';
+import { initAuthGate } from '../common/auth-ui.js';
 
 const dateCarouselEl = document.getElementById('date-carousel');
 const weightForm = document.getElementById('weight-form');
@@ -65,7 +65,7 @@ async function renderStats(entries) {
 
 async function renderChart(data) {
   const resolvedData = data || (await loadData());
-  const dates = Object.keys(resolvedData.entries).sort();
+  const dates = Object.keys(resolvedData.entries).sort().slice(-chartRangeDays);
   const ctx = document.getElementById("weightChart");
   const points = dates.map((date) => resolvedData.entries[date]?.weightKg ?? null);
   const logged = points.filter((v) => v !== null && v !== undefined);
@@ -166,7 +166,7 @@ window.addEventListener('resize', () => {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {
     });
   });
 }

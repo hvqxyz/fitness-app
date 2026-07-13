@@ -1,7 +1,7 @@
 {
   "name": "Fitness Counter",
   "short_name": "Fitness",
-  "start_url": "./index.html",
+  "start_url": "./weight/index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f9f9f7",

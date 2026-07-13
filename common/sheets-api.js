@@ -10,10 +10,16 @@ const WEIGHT_SHEET = 'Weight';
 const FOOD_SHEET = 'Food';
 const PROFILE_SHEET = 'Profile';
 const INGREDIENTS_SHEET = 'Ingredients';
+const WORKOUTS_SHEET = 'Workouts';
+const GYM_EXERCISES_SHEET = 'GymExercises';
+const EXERCISES_SHEET = 'Exercises';
 
 const FOOD_HEADER = ['Date', 'Name', 'Kcal', 'Meal', 'WeightG', 'Fiber', 'Carbs', 'SatFat', 'UnsatFat', 'Protein'];
 const INGREDIENTS_HEADER = ['Name', 'KcalPer100g', 'FiberPer100g', 'CarbsPer100g', 'SatFatPer100g', 'UnsatFatPer100g', 'ProteinPer100g'];
 const PROFILE_HEADER = ['Age', 'HeightCm', 'TargetKcal', 'ProteinPercent', 'CarbsPercent', 'FatPercent'];
+const WORKOUTS_HEADER = ['Date', 'Type', 'DistanceKm', 'PaceMinPerKm', 'HeartRate', 'GymTemplate', 'Note', 'Calories', 'Exercise', 'Reps', 'Kilos', 'Sets', 'RunningType'];
+const GYM_EXERCISES_HEADER = ['Template', 'Exercise', 'TargetReps', 'TargetSets'];
+const EXERCISES_HEADER = ['Name'];
 
 let spreadsheetId = localStorage.getItem(SPREADSHEET_ID_KEY);
 let sheetIds = null; // { Weight: <numeric id>, Food: <numeric id> }
@@ -58,6 +64,9 @@ async function findOrCreateSpreadsheet() {
         { properties: { title: FOOD_SHEET } },
         { properties: { title: PROFILE_SHEET } },
         { properties: { title: INGREDIENTS_SHEET } },
+        { properties: { title: WORKOUTS_SHEET } },
+        { properties: { title: GYM_EXERCISES_SHEET } },
+        { properties: { title: EXERCISES_SHEET } },
       ],
     }),
   });
@@ -86,6 +95,18 @@ async function findOrCreateSpreadsheet() {
   await apiFetch(`${spreadsheetId}/values/${INGREDIENTS_SHEET}!A1:G1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [INGREDIENTS_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:M1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [WORKOUTS_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${GYM_EXERCISES_SHEET}!A1:D1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [GYM_EXERCISES_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${EXERCISES_SHEET}!A1:A1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [EXERCISES_HEADER] }),
   });
 
   return spreadsheetId;
@@ -162,6 +183,96 @@ async function ensureIngredientsSheet() {
   });
 }
 
+let workoutsHeaderEnsured = false;
+
+/**
+ * Rewrites the Workouts tab's header row for spreadsheets created before the
+ * Sets/RunningType columns existed. Those columns are always appended (never
+ * inserted) when writing rows, so existing cells are never shifted — this
+ * just backfills the header labels once per session.
+ */
+async function ensureWorkoutsSetsHeader() {
+  if (workoutsHeaderEnsured) return;
+  workoutsHeaderEnsured = true;
+  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:M1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [WORKOUTS_HEADER] }),
+  });
+}
+
+/**
+ * Adds the Workouts tab to spreadsheets created before this feature existed.
+ */
+async function ensureWorkoutsSheet() {
+  if (sheetIds[WORKOUTS_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: WORKOUTS_SHEET } } }] }),
+  });
+  sheetIds[WORKOUTS_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:M1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [WORKOUTS_HEADER] }),
+  });
+}
+
+let gymExercisesHeaderEnsured = false;
+
+/**
+ * Rewrites the GymExercises tab's header row for spreadsheets created before
+ * the TargetSets column existed. That column is always appended (never
+ * inserted) when writing rows, so existing Exercise/TargetReps cells are
+ * never shifted — this just backfills the header label once per session.
+ */
+async function ensureGymExercisesTargetSetsHeader() {
+  if (gymExercisesHeaderEnsured) return;
+  gymExercisesHeaderEnsured = true;
+  await apiFetch(`${spreadsheetId}/values/${GYM_EXERCISES_SHEET}!A1:D1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [GYM_EXERCISES_HEADER] }),
+  });
+}
+
+/**
+ * Adds the GymExercises tab to spreadsheets created before this feature
+ * existed.
+ */
+async function ensureGymExercisesSheet() {
+  if (sheetIds[GYM_EXERCISES_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: GYM_EXERCISES_SHEET } } }] }),
+  });
+  sheetIds[GYM_EXERCISES_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${GYM_EXERCISES_SHEET}!A1:D1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [GYM_EXERCISES_HEADER] }),
+  });
+}
+
+/**
+ * Adds the Exercises tab (the master gym exercise catalog) to spreadsheets
+ * created before this feature existed.
+ */
+async function ensureExercisesSheet() {
+  if (sheetIds[EXERCISES_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: EXERCISES_SHEET } } }] }),
+  });
+  sheetIds[EXERCISES_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${EXERCISES_SHEET}!A1:A1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [EXERCISES_HEADER] }),
+  });
+}
+
 async function loadSheetIds() {
   if (sheetIds) return sheetIds;
   const meta = await apiFetch(`${spreadsheetId}?fields=sheets.properties`);
@@ -182,6 +293,11 @@ export async function ensureSpreadsheet() {
   await ensureProfileTargetsHeader();
   await ensureFoodMealHeader();
   await ensureIngredientsSheet();
+  await ensureWorkoutsSheet();
+  await ensureWorkoutsSetsHeader();
+  await ensureGymExercisesSheet();
+  await ensureGymExercisesTargetSetsHeader();
+  await ensureExercisesSheet();
   return spreadsheetId;
 }
 
@@ -191,7 +307,9 @@ export async function ensureSpreadsheet() {
  */
 export async function fetchEntries() {
   const id = await ensureSpreadsheet();
-  const result = await apiFetch(`${id}/values:batchGet?ranges=${WEIGHT_SHEET}&ranges=${FOOD_SHEET}`);
+  const result = await apiFetch(
+    `${id}/values:batchGet?ranges=${WEIGHT_SHEET}&ranges=${FOOD_SHEET}&valueRenderOption=UNFORMATTED_VALUE`,
+  );
   const [weightRange, foodRange] = result.valueRanges;
   const entries = {};
 
@@ -278,7 +396,7 @@ export async function deleteRows(sheetName, rows) {
 
 export async function fetchProfile() {
   const id = await ensureSpreadsheet();
-  const result = await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:F2`);
+  const result = await apiFetch(`${id}/values/${PROFILE_SHEET}!A2:F2?valueRenderOption=UNFORMATTED_VALUE`);
   const [age, heightCm, targetKcal, proteinPercent, carbsPercent, fatPercent] = (result.values || [])[0] || [];
   const num = (v) => (v !== undefined && v !== '' ? parseFloat(v) : null);
   return {
@@ -309,7 +427,7 @@ export async function putTargets(targetKcal, proteinPercent, carbsPercent, fatPe
 
 export async function fetchIngredients() {
   const id = await ensureSpreadsheet();
-  const result = await apiFetch(`${id}/values/${INGREDIENTS_SHEET}!A2:G`);
+  const result = await apiFetch(`${id}/values/${INGREDIENTS_SHEET}!A2:G?valueRenderOption=UNFORMATTED_VALUE`);
   return (result.values || [])
     .map((row, i) => {
       const [name, kcalPer100g, fiberPer100g, carbsPer100g, satFatPer100g, unsatFatPer100g, proteinPer100g] = row;
@@ -350,9 +468,106 @@ export async function clearAndWrite(sheetName, headerColumns, rows) {
   }
 }
 
+export async function fetchWorkouts() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${WORKOUTS_SHEET}!A2:M?valueRenderOption=UNFORMATTED_VALUE`);
+  const num = (v) => (v !== undefined && v !== '' ? parseFloat(v) : undefined);
+  return (result.values || [])
+    .map((row, i) => {
+      const [date, type, distanceKm, paceMinPerKm, heartRate, gymTemplate, note, calories, exercise, reps, kilos, sets, runningType] = row;
+      return {
+        date,
+        type,
+        distanceKm: num(distanceKm),
+        paceMinPerKm: num(paceMinPerKm),
+        heartRate: num(heartRate),
+        gymTemplate: gymTemplate || undefined,
+        note: note || undefined,
+        calories: num(calories),
+        exercise: exercise || undefined,
+        reps: num(reps),
+        kilos: num(kilos),
+        sets: num(sets),
+        runningType: runningType || undefined,
+        _row: i + 2,
+      };
+    })
+    .filter((workout) => workout.date && workout.type);
+}
+
+export async function appendWorkoutRow(workout) {
+  const id = await ensureSpreadsheet();
+  const { date, type, distanceKm, paceMinPerKm, heartRate, gymTemplate, note, calories, exercise, reps, kilos, sets, runningType } = workout;
+  await apiFetch(`${id}/values/${WORKOUTS_SHEET}:append?valueInputOption=RAW`, {
+    method: 'POST',
+    body: JSON.stringify({
+      values: [[
+        date, type, distanceKm ?? '', paceMinPerKm ?? '', heartRate ?? '', gymTemplate ?? '', note ?? '',
+        calories ?? '', exercise ?? '', reps ?? '', kilos ?? '', sets ?? '', runningType ?? '',
+      ]],
+    }),
+  });
+}
+
+export async function fetchGymExercises() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${GYM_EXERCISES_SHEET}!A2:D?valueRenderOption=UNFORMATTED_VALUE`);
+  return (result.values || [])
+    .map((row, i) => {
+      const [template, exercise, targetReps, targetSets] = row;
+      return {
+        template,
+        exercise,
+        targetReps: parseFloat(targetReps) || 0,
+        targetSets: parseFloat(targetSets) || 0,
+        _row: i + 2,
+      };
+    })
+    .filter((e) => e.template && e.exercise);
+}
+
+export async function appendGymExerciseRow(exercise) {
+  const id = await ensureSpreadsheet();
+  const { template, exercise: name, targetReps, targetSets } = exercise;
+  await apiFetch(`${id}/values/${GYM_EXERCISES_SHEET}:append?valueInputOption=RAW`, {
+    method: 'POST',
+    body: JSON.stringify({ values: [[template, name, targetReps, targetSets ?? '']] }),
+  });
+}
+
 export const SHEET_NAMES = {
   WEIGHT: WEIGHT_SHEET,
   FOOD: FOOD_SHEET,
   PROFILE: PROFILE_SHEET,
   INGREDIENTS: INGREDIENTS_SHEET,
+  WORKOUTS: WORKOUTS_SHEET,
+  GYM_EXERCISES: GYM_EXERCISES_SHEET,
+  EXERCISES: EXERCISES_SHEET,
 };
+
+/**
+ * The master catalog of gym exercise names (managed on the Profile page),
+ * used to populate the exercise picker when assigning exercises to a
+ * template on the Summary page — distinct from GymExercises, which stores
+ * the per-template target reps/sets assignment.
+ */
+export async function fetchExercises() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${EXERCISES_SHEET}!A2:A?valueRenderOption=UNFORMATTED_VALUE`);
+  return (result.values || [])
+    .map((row, i) => ({ name: row[0], _row: i + 2 }))
+    .filter((e) => e.name);
+}
+
+export async function appendExerciseRow(name) {
+  const id = await ensureSpreadsheet();
+  await apiFetch(`${id}/values/${EXERCISES_SHEET}:append?valueInputOption=RAW`, {
+    method: 'POST',
+    body: JSON.stringify({ values: [[name]] }),
+  });
+}
+
+export async function getSheetGid(sheetName) {
+  await ensureSpreadsheet();
+  return sheetIds[sheetName];
+}
