@@ -229,35 +229,33 @@ export function renderGymExerciseKilosTrendChart(canvas, workouts, { gymTemplate
   const validActual = actualValues.filter((v) => v !== null && v !== undefined && Number.isFinite(v));
   const averageValue = validActual.length ? validActual.reduce((sum, v) => sum + v, 0) / validActual.length : null;
 
-  const datasets = [{
-    label: 'Actual weight',
-    data: actualValues,
-    borderColor: color,
-    backgroundColor: color,
-    pointRadius: 3,
-    spanGaps: false,
-  }];
+  const datasets = [];
 
   if (mode === 'max') {
     datasets.push({
       label: 'Max kg/rep',
       data: points.map((p) => p.max),
-      borderColor: '#898781',
-      borderDash: [6, 4],
+      borderColor: color,
+      backgroundColor: color,
       borderWidth: 1.5,
-      pointRadius: 0,
+      pointRadius: 2,
       spanGaps: true,
       fill: false,
+      cubicInterpolationMode: 'monotone',
+      tension: 0.1
     });
-  } else if (averageValue !== null) {
+  } else {
     datasets.push({
-      label: `Average (${averageValue.toFixed(1)} kg)`,
-      data: points.map(() => averageValue),
-      borderColor: '#898781',
-      borderDash: [6, 4],
+      label: 'Avg kg/rep',
+          data: actualValues,
+      borderColor: color,
+      backgroundColor: color,
       borderWidth: 1.5,
-      pointRadius: 0,
+      pointRadius: 2,
+      spanGaps: true,
       fill: false,
+      cubicInterpolationMode: 'monotone',
+      tension: 0.1
     });
   }
 
@@ -273,11 +271,14 @@ export function renderGymExerciseKilosTrendChart(canvas, workouts, { gymTemplate
     datasets.push({
       label: 'Body weight',
       data: bodyWeightValues,
-      borderColor: bodyWeightColor,
-      backgroundColor: bodyWeightColor,
-      pointRadius: 2,
+      borderColor: '#898781',
+      borderDash: [6, 4],
+      borderWidth: 1.5,
+      pointRadius: 1,
       spanGaps: true,
-      yAxisID: 'y1',
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      tension: 0.1
     });
   }
 
@@ -293,16 +294,7 @@ export function renderGymExerciseKilosTrendChart(canvas, workouts, { gymTemplate
       aspectRatio: 2.5,
       scales: {
         y: { beginAtZero: false, title: { display: true, text: 'kg' } },
-        ...(hasBodyWeight
-          ? {
-              y1: {
-                beginAtZero: false,
-                position: 'right',
-                grid: { drawOnChartArea: false },
-                title: { display: true, text: 'Body weight (kg)' },
-              },
-            }
-          : {}),
+        ...({}),
       },
       plugins: {
         legend: { display: true, position: 'bottom' },

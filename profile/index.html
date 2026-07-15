@@ -17,7 +17,6 @@
   <nav class="tabs" role="tablist">
     <a class="tab-btn" role="tab" aria-selected="false" href="../weight/index.html">Weight</a>
     <a class="tab-btn" role="tab" aria-selected="false" href="../calories/index.html">Calories</a>
-    <a class="tab-btn" role="tab" aria-selected="false" href="../summary/index.html">Summary</a>
     <a class="tab-btn" role="tab" aria-selected="false" href="../workouts/running/index.html">Workouts</a>
     <a class="tab-btn" role="tab" aria-selected="false" href="../performance/index.html">Performance</a>
   </nav>
@@ -51,14 +50,188 @@
         </div>
       </section>
 
+      <div class="range-toggle" id="profile-subnav">
+        <button type="button" class="button range-btn" data-view="Targets" aria-pressed="true">Targets and History</button>
+        <button type="button" class="button range-btn" data-view="Food" aria-pressed="false">Food Database</button>
+        <button type="button" class="button range-btn" data-view="Gym" aria-pressed="false">Gym Templates and Exercises</button>
+      </div>
+
+      <div id="profile-targets-view">
+        <section class="card">
+          <h2>Profile</h2>
+          <form id="profile-form" class="inline-form">
+            <div class="form-field">
+              <label for="profile-age-input">Age</label>
+              <input type="number" id="profile-age-input" step="1" min="1" max="120" placeholder="Age" inputmode="numeric" />
+            </div>
+            <div class="form-field">
+              <label for="profile-height-input">Height (cm)</label>
+              <input type="number" id="profile-height-input" step="0.1" min="50" max="272" placeholder="Height (cm)" inputmode="decimal" />
+            </div>
+            <button type="submit" class="button">Save profile</button>
+          </form>
+          <p id="profile-message" class="message" role="status"></p>
+        </section>
+
+        <div class="range-toggle" id="targets-subnav" style="margin-top: 10px">
+          <button type="button" class="button range-btn" data-view="Activity" aria-pressed="true">Activity Factor</button>
+          <button type="button" class="button range-btn" data-view="Targets" aria-pressed="false">Targets</button>
+        </div>
+
+        <div id="activity-factor-view">
+          <div class="stat-grid" style="margin-top: 10px">
+            <div class="stat-tile">
+              <div class="stat-label">Weight (last week)</div>
+              <div class="stat-value" id="prev-week-weight-value">—</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-label">BMR</div>
+              <div class="stat-value" id="bmr-value">—</div>
+            </div>
+          </div>
+
+          <section class="card" style="margin-top: 10px">
+            <h2>Activity Factor</h2>
+            <form id="activity-form" class="ingredient-form">
+              <input type="number" id="activity-multiplier-input" placeholder="Activity multiplier" step="0.05" min="1" max="3" inputmode="decimal" required />
+              <p class="ingredient-sub">Maintenance = BMR × activity multiplier. Goal adjustment uses 1 kg ≈ 7,000 kcal.</p>
+
+              <h3>Aim</h3>
+              <div class="range-toggle" id="goal-type-toggle">
+                <button type="button" class="button range-btn" data-goal="Lose" aria-pressed="true">Lose weight</button>
+                <button type="button" class="button range-btn" data-goal="Gain" aria-pressed="false">Gain weight</button>
+              </div>
+              <input type="number" id="goal-rate-input" placeholder="kg per week" step="0.05" min="0" inputmode="decimal" required />
+              <button type="submit" class="button">Save activity</button>
+            </form>
+            <p id="activity-message" class="message" role="status"></p>
+
+            <h3>Weekly history</h3>
+            <ul id="activity-history-list" class="food-list"></ul>
+          </section>
+
+          <div class="stat-grid" style="margin-top: 10px">
+            <div class="stat-tile">
+              <div class="stat-label">Maintenance Target</div>
+              <div class="stat-value" id="maintenance-target-value">—</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-label">Goal kcal</div>
+              <div class="stat-value" id="goal-kcal-value">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="targets-only-view" hidden>
+          <section class="card" style="margin-top: 10px">
+            <h2>Targets</h2>
+            <form id="targets-form" class="ingredient-form">
+              <input type="number" id="target-kcal-input" placeholder="Target calories / day" step="1" min="0" inputmode="numeric" />
+              <div class="ingredient-grid">
+                <input type="number" id="target-protein-input" placeholder="Protein %" step="1" min="0" max="100" inputmode="numeric" />
+                <input type="number" id="target-carbs-input" placeholder="Carbs %" step="1" min="0" max="100" inputmode="numeric" />
+                <input type="number" id="target-fat-input" placeholder="Fat %" step="1" min="0" max="100" inputmode="numeric" />
+              </div>
+              <p id="targets-percent-hint" class="ingredient-sub"></p>
+              <button type="submit" class="button">Save targets</button>
+            </form>
+            <p id="targets-message" class="message" role="status"></p>
+
+            <h3>Weekly history</h3>
+            <ul id="targets-history-list" class="food-list"></ul>
+          </section>
+        </div>
+      </div>
+
+      <div id="profile-food-view" hidden>
+        <section class="card">
+          <h2>Food Database</h2>
+          <form id="ingredient-form" class="ingredient-form">
+            <div class="food-search form-field" id="ingredient-name-search">
+              <label for="ingredient-name-input">Food name</label>
+              <input type="text" class="food-search-input" id="ingredient-name-input" placeholder="Food name" autocomplete="off" required />
+              <ul class="food-search-results" hidden></ul>
+            </div>
+            <p id="ingredient-message" class="message" role="status"></p>
+            <div class="ingredient-grid">
+              <div class="form-field">
+                <label for="ingredient-kcal-input">Kcal /100g</label>
+                <input type="number" id="ingredient-kcal-input" placeholder="Kcal /100g" step="0.1" min="0" required />
+              </div>
+              <div class="form-field">
+                <label for="ingredient-fiber-input">Fiber /100g</label>
+                <input type="number" id="ingredient-fiber-input" placeholder="Fiber /100g" step="0.1" min="0" />
+              </div>
+              <div class="form-field">
+                <label for="ingredient-carbs-input">Carbs /100g</label>
+                <input type="number" id="ingredient-carbs-input" placeholder="Carbs /100g" step="0.1" min="0" />
+              </div>
+              <div class="form-field">
+                <label for="ingredient-satfat-input">Sat fat /100g</label>
+                <input type="number" id="ingredient-satfat-input" placeholder="Sat fat /100g" step="0.1" min="0" />
+              </div>
+              <div class="form-field">
+                <label for="ingredient-satfat-input">Unsat fat /100g</label>
+                <input type="number" id="ingredient-unsatfat-input" placeholder="Unsat fat /100g" step="0.1" min="0" />
+              </div>
+              <div class="form-field">
+                <label for="ingredient-protein-input">Protein /100g</label>
+                <input type="number" id="ingredient-protein-input" placeholder="Protein /100g" step="0.1" min="0" />
+              </div>
+            </div>
+            <button type="submit" class="button">Add food</button>
+          </form>
+          <button id="open-ingredients-sheet-btn" type="button" class="button secondary" style="margin-top: 10px">Open in Google Sheets</button>
+        </section>
+
+        <dialog id="ingredient-detail-modal" class="ingredient-modal">
+          <h3 id="ingredient-modal-name"></h3>
+          <dl id="ingredient-modal-detail" class="ingredient-modal-detail"></dl>
+          <div class="ingredient-modal-actions">
+            <button type="button" id="ingredient-modal-delete" class="button delete-day">Remove</button>
+            <button type="button" id="ingredient-modal-close" class="button secondary">Close</button>
+          </div>
+        </dialog>
+      </div>
+
+      <div id="profile-gym-view" hidden>
+        <section class="card">
+          <h2>Gym Exercises</h2>
+          <form id="exercise-form" class="inline-form">
+            <input type="text" id="exercise-name-input" placeholder="Exercise name (e.g. Bench Press)" required />
+            <button type="submit" class="button">Add exercise</button>
+          </form>
+          <ul id="exercise-list" class="food-list"></ul>
+          <p id="exercise-message" class="message" role="status"></p>
+        </section>
+
+        <section class="card">
+          <h2>Gym Templates</h2>
+          <div class="range-toggle" id="gym-template-toggle">
+            <button type="button" class="button range-btn" data-template="Training A" aria-pressed="true">Training A</button>
+            <button type="button" class="button range-btn" data-template="Training B" aria-pressed="false">Training B</button>
+          </div>
+          <form id="gym-exercise-form" class="ingredient-form">
+            <select id="gym-exercise-name-input" required style="margin-top: 10px">
+              <option value="" disabled selected>Choose exercise</option>
+            </select>
+            <input type="number" id="gym-exercise-target-reps-input" placeholder="Target reps" step="1" min="0" inputmode="numeric" />
+            <input type="number" id="gym-exercise-target-sets-input" placeholder="Target sets" step="1" min="0" inputmode="numeric" />
+            <button type="submit" class="button">Add exercise</button>
+          </form>
+          <ul id="gym-exercise-list" class="food-list"></ul>
+          <p id="gym-exercise-message" class="message" role="status"></p>
+        </section>
+      </div>
+
       <section class="card">
-        <h2>Gym Exercises</h2>
-        <form id="exercise-form" class="inline-form">
-          <input type="text" id="exercise-name-input" placeholder="Exercise name (e.g. Bench Press)" required />
-          <button type="submit" class="button">Add exercise</button>
-        </form>
-        <ul id="exercise-list" class="food-list"></ul>
-        <p id="exercise-message" class="message" role="status"></p>
+        <h2>Backup</h2>
+        <div class="inline-form">
+          <button id="export-btn" type="button" class="button">Export data</button>
+          <button id="import-btn" type="button" class="button secondary">Import data</button>
+          <input type="file" id="import-file" accept="application/json" hidden />
+        </div>
+        <p id="backup-message" class="message" role="status"></p>
       </section>
     </div>
   </main>

@@ -56,7 +56,7 @@ appRoot.innerHTML = `
     </div>
   </section>
 
-  <div class="range-toggle" id="workout-subnav">
+  <div class="range-toggle" id="workout-subnav" style="padding-top: 10px; padding-bottom: 10px">
     <a class="range-btn" data-type="Running" href="${TYPE_HREF.Running}">Running</a>
     <a class="range-btn" data-type="Gym" href="${TYPE_HREF.Gym}">Gym</a>
     <a class="range-btn" data-type="Other" href="${TYPE_HREF.Other}">Other</a>
@@ -68,34 +68,65 @@ appRoot.innerHTML = `
   </section>
 
   <div id="running-section">
-    <div class="range-toggle" id="running-subnav">
+    <div class="range-toggle" id="running-subnav" style="padding-top: 10px; padding-bottom: 10px">
       <button type="button" class="button range-btn" data-view="Tracker" aria-pressed="true">Tracker</button>
       <button type="button" class="button range-btn" data-view="Analytics" aria-pressed="false">Analytics</button>
     </div>
 
     <section class="card" id="running-tracker-view">
       <h2>Running</h2>
-      <button type="button" id="add-workout-btn" class="button secondary">+ Add run</button>
       <form id="workout-form" class="inline-form" hidden>
-        <input type="number" id="workout-distance-input" placeholder="Distance (km)" step="0.01" min="0" inputmode="decimal" required />
-        <input type="number" id="workout-pace-input" placeholder="Pace (min/km)" step="0.01" min="0" inputmode="decimal" />
-        <input type="number" id="workout-heartrate-input" placeholder="Heart rate (bpm)" step="1" min="0" inputmode="numeric" />
-        <select id="workout-running-type-input">
-          <option value="">Run type (optional)</option>
-          <option value="Long run">Long run</option>
-          <option value="Tempo">Tempo</option>
-          <option value="Sprints">Sprints</option>
-        </select>
-        <input type="text" id="workout-note-input" placeholder="Note" />
-        <input type="number" id="workout-calories-input" placeholder="Calories" step="1" min="0" inputmode="numeric" />
-        <button type="submit" class="button">Save</button>
+
+        <div class="form-field">
+          <label for="workout-distance-input">Distance (km)</label>
+          <input type="number" id="workout-distance-input"
+                 step="0.01" min="0" inputmode="decimal" required />
+        </div>
+
+        <div class="form-field">
+          <label for="workout-pace-input">Pace (min/km)</label>
+          <input type="number" id="workout-pace-input"
+                 step="0.01" min="0" inputmode="decimal" />
+        </div>
+
+        <div class="form-field">
+          <label for="workout-heartrate-input">Heart rate (bpm)</label>
+          <input type="number" id="workout-heartrate-input"
+                 step="1" min="0" inputmode="numeric" />
+        </div>
+
+        <div class="form-field">
+          <label for="workout-running-type-input">Run type</label>
+          <select id="workout-running-type-input" class="select-list">
+            <option value="">Optional</option>
+            <option value="Long run">Long run</option>
+            <option value="Tempo">Tempo</option>
+            <option value="Sprints">Sprints</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="workout-note-input">Note</label>
+          <input type="text" id="workout-note-input" />
+        </div>
+
+        <div class="form-field">
+          <label for="workout-calories-input">Calories</label>
+          <input type="number" id="workout-calories-input"
+                 step="1" min="0" inputmode="numeric" />
+        </div>
+
+        <div class="form-field button-field">
+          <button type="submit" class="button">Save</button>
+        </div>
+
       </form>
     </section>
 
     <section class="card" id="running-analytics-view" hidden>
       <h2>Analytics</h2>
 
-      <div class="range-toggle" id="running-days-toggle">
+      <div class="range-toggle" id="running-days-toggle" style="margin-bottom: 10px">
         <button type="button" class="button range-btn" data-days="7" aria-pressed="false">Last 7 days</button>
         <button type="button" class="button range-btn" data-days="30" aria-pressed="true">Last 30 days</button>
         <button type="button" class="button range-btn" data-days="90" aria-pressed="false">Last 90 days</button>
@@ -127,7 +158,7 @@ appRoot.innerHTML = `
         </div>
       </div>
 
-      <div class="range-toggle" id="running-metric-toggle" style="padding-top: 15px">
+      <div class="range-toggle" id="running-metric-toggle" style="padding-top: 15px; margin-bottom: 10px;">
         <button type="button" class="button range-btn" data-metric="distanceKm" aria-pressed="true">Distance</button>
         <button type="button" class="button range-btn" data-metric="paceMinPerKm" aria-pressed="false">Pace</button>
         <button type="button" class="button range-btn" data-metric="heartRate" aria-pressed="false">Heart Rate</button>
@@ -140,14 +171,14 @@ appRoot.innerHTML = `
         <button type="button" class="button range-btn-small" data-filter="Sprints" aria-pressed="false">Sprints</button>
       </div>
 
-      <div class="chart-wrap">
+      <div class="chart-wrap" style="margin-top: 20px;">
         <canvas id="running-analytics-chart"></canvas>
       </div>
     </section>
   </div>
 
   <div id="gym-section" hidden>
-    <div class="range-toggle" id="gym-subnav">
+    <div class="range-toggle" id="gym-subnav" style="margin-bottom: 10px; margin-top: 10px">
       <button type="button" class="button range-btn" data-view="Tracker" aria-pressed="true">Tracker</button>
       <button type="button" class="button range-btn" data-view="Analytics" aria-pressed="false">Analytics</button>
     </div>
@@ -157,7 +188,11 @@ appRoot.innerHTML = `
       <select id="gym-template-select"></select>
       <ul id="gym-exercise-log-list" class="gym-log-list"></ul>
       <div class="inline-form" id="gym-session-calories-row">
-        <input type="number" id="gym-session-calories-input" placeholder="Workout calories (whole session)" step="1" min="0" inputmode="numeric" />
+        <div class="form-field">
+            <label for="gym-session-calories-input">Workout calories</label>
+            <input type="number" id="gym-session-calories-input" placeholder="Workout calories" step="1" min="0" inputmode="numeric" />
+        </div>
+    
         <button type="button" id="gym-session-calories-save-btn" class="button">Save calories</button>
       </div>
     </section>
@@ -166,7 +201,7 @@ appRoot.innerHTML = `
       <h2>Analytics</h2>
       <select id="gym-analytics-exercise-select"></select>
 
-      <div class="range-toggle" id="gym-analytics-days-toggle">
+      <div class="range-toggle" id="gym-analytics-days-toggle" style="padding-top: 10px">
         <button type="button" class="button range-btn" data-days="7" aria-pressed="false">Last 7 days</button>
         <button type="button" class="button range-btn" data-days="30" aria-pressed="true">Last 30 days</button>
         <button type="button" class="button range-btn" data-days="90" aria-pressed="false">Last 90 days</button>
@@ -187,11 +222,13 @@ appRoot.innerHTML = `
         </div>
       </div>
 
-      <div class="chart-wrap">
+      <div class="chart-wrap" style="margin-bottom: 10px">
         <canvas id="gym-analytics-chart"></canvas>
       </div>
 
-      <div class="range-toggle" id="gym-kilos-trend-mode-toggle">
+      <h2>Strength progress</h2>
+
+      <div class="range-toggle" id="gym-kilos-trend-mode-toggle" style="margin-bottom: 15px; margin-top: 15px">
         <button type="button" class="button range-btn" data-mode="avg" aria-pressed="true">Avg</button>
         <button type="button" class="button range-btn" data-mode="max" aria-pressed="false">Max</button>
       </div>
@@ -202,13 +239,20 @@ appRoot.innerHTML = `
     </section>
   </div>
 
-  <section class="card" id="other-section" hidden>
+  <section class="card" id="other-section" style="margin-top: 10px" hidden>
     <h2>Other</h2>
-    <button type="button" id="add-other-workout-btn" class="button secondary">+ Add workout</button>
     <form id="other-workout-form" class="inline-form" hidden>
-      <input type="text" id="other-note-input" placeholder="Note" required />
-      <input type="number" id="other-calories-input" placeholder="Calories" step="1" min="0" inputmode="numeric" />
-      <button type="submit" class="button">Save</button>
+        <div class="form-field">
+            <label for="other-note-input">Note</label>
+            <input type="text" id="other-note-input" placeholder="Note" required />
+        </div>
+        <div class="form-field">
+          <label for="other-calories-input">Calories</label>
+          <input type="number" id="other-calories-input" placeholder="Calories" step="1" min="0" inputmode="numeric" />
+        </div>
+        <div class="form-field button-field">
+          <button type="submit" class="button">Save</button>
+        </div>
     </form>
   </section>
 
@@ -257,7 +301,6 @@ const runningHeartRateRingCanvas = document.getElementById('running-heartrate-ri
 const runningTotalRunsValue = document.getElementById('running-total-runs-value');
 const runningTotalTimeValue = document.getElementById('running-total-time-value');
 
-const addWorkoutBtn = document.getElementById('add-workout-btn');
 const workoutForm = document.getElementById('workout-form');
 const distanceInput = document.getElementById('workout-distance-input');
 const paceInput = document.getElementById('workout-pace-input');
@@ -281,7 +324,6 @@ const gymKilosTrendChartCanvas = document.getElementById('gym-kilos-trend-chart'
 const gymKilosTrendModeToggle = document.getElementById('gym-kilos-trend-mode-toggle');
 const gymKilosTrendModeButtons = gymKilosTrendModeToggle.querySelectorAll('.range-btn');
 
-const addOtherWorkoutBtn = document.getElementById('add-other-workout-btn');
 const otherWorkoutForm = document.getElementById('other-workout-form');
 const otherNoteInput = document.getElementById('other-note-input');
 const otherCaloriesInput = document.getElementById('other-calories-input');
@@ -487,6 +529,17 @@ function renderGymExerciseLog() {
       kilosInput.inputMode = 'decimal';
       if (existing?.kilos !== undefined) kilosInput.value = existing.kilos;
 
+      const differentSetWeightsInput = document.createElement('input');
+      differentSetWeightsInput.type = 'checkbox';
+      differentSetWeightsInput.checked = Array.isArray(existing?.setKilos) && existing.setKilos.length > 0;
+
+      const differentSetWeightsLabel = document.createElement('label');
+      differentSetWeightsLabel.className = 'gym-set-kilos-toggle';
+      differentSetWeightsLabel.append(differentSetWeightsInput, document.createTextNode('Different weight per set'));
+
+      const setKilosWrap = document.createElement('div');
+      setKilosWrap.className = 'gym-set-kilos-fields';
+
       const setsInput = document.createElement('input');
       setsInput.type = 'number';
       setsInput.placeholder = 'Sets';
@@ -494,6 +547,38 @@ function renderGymExerciseLog() {
       setsInput.min = '0';
       setsInput.inputMode = 'numeric';
       if (existing?.sets !== undefined) setsInput.value = existing.sets;
+
+      function renderSetKilosInputs() {
+        const currentValues = [...setKilosWrap.querySelectorAll('input')].map((input) => input.value);
+        const count = Math.max(
+          0,
+          Math.floor(parseFloat(setsInput.value) || existing?.setKilos?.length || ex.targetSets || 0),
+        );
+        setKilosWrap.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.placeholder = `Set ${i + 1} kg`;
+          input.step = '0.5';
+          input.min = '0';
+          input.inputMode = 'decimal';
+          const value = currentValues[i] ?? existing?.setKilos?.[i] ?? existing?.kilos;
+          if (value !== undefined) input.value = value;
+          setKilosWrap.appendChild(input);
+        }
+      }
+
+      function syncSetKilosMode() {
+        const useSetKilos = differentSetWeightsInput.checked;
+        kilosInput.hidden = useSetKilos;
+        setKilosWrap.hidden = !useSetKilos;
+        if (useSetKilos) renderSetKilosInputs();
+      }
+
+      differentSetWeightsInput.addEventListener('change', syncSetKilosMode);
+      setsInput.addEventListener('input', () => {
+        if (differentSetWeightsInput.checked) renderSetKilosInputs();
+      });
 
       const saveBtn = document.createElement('button');
       saveBtn.type = 'button';
@@ -508,10 +593,22 @@ function renderGymExerciseLog() {
         };
         const reps = parseFloat(repsInput.value);
         if (Number.isFinite(reps)) payload.reps = reps;
-        const kilos = parseFloat(kilosInput.value);
-        if (Number.isFinite(kilos)) payload.kilos = kilos;
         const sets = parseFloat(setsInput.value);
         if (Number.isFinite(sets)) payload.sets = sets;
+
+        if (differentSetWeightsInput.checked) {
+          const setKilos = [...setKilosWrap.querySelectorAll('input')]
+            .map((input) => parseFloat(input.value))
+            .filter((value) => Number.isFinite(value));
+          if (setKilos.length) {
+            payload.setKilos = setKilos;
+            payload.sets = setKilos.length;
+            payload.kilos = setKilos.reduce((sum, value) => sum + value, 0) / setKilos.length;
+          }
+        } else {
+          const kilos = parseFloat(kilosInput.value);
+          if (Number.isFinite(kilos)) payload.kilos = kilos;
+        }
 
         try {
           const current = findGymExerciseEntry(ex.exercise);
@@ -526,7 +623,8 @@ function renderGymExerciseLog() {
 
       const fieldsWrap = document.createElement('div');
       fieldsWrap.className = 'gym-log-fields';
-      fieldsWrap.append(repsInput, kilosInput, setsInput, saveBtn);
+      fieldsWrap.append(repsInput, kilosInput, setsInput, differentSetWeightsLabel, setKilosWrap, saveBtn);
+      syncSetKilosMode();
 
       li.append(nameSpan, targetSpan, fieldsWrap);
       gymExerciseLogList.appendChild(li);
@@ -648,10 +746,6 @@ async function render() {
   }
 }
 
-addWorkoutBtn.addEventListener('click', () => {
-  workoutForm.hidden = !workoutForm.hidden;
-});
-
 workoutForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const distanceKm = parseFloat(distanceInput.value);
@@ -690,10 +784,6 @@ gymSessionCaloriesSaveBtn.addEventListener('click', async () => {
   } catch (err) {
     showSyncMessage(`Couldn't save to Google Sheets: ${err.message}`, 'error');
   }
-});
-
-addOtherWorkoutBtn.addEventListener('click', () => {
-  otherWorkoutForm.hidden = !otherWorkoutForm.hidden;
 });
 
 otherWorkoutForm.addEventListener('submit', async (e) => {

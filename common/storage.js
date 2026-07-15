@@ -16,6 +16,10 @@ import {
   appendGymExerciseRow,
   fetchExercises,
   appendExerciseRow,
+  fetchTargetsHistory,
+  putTargetsHistoryRow,
+  fetchActivityHistory,
+  putActivityHistoryRow,
   ensureSpreadsheet,
   getSheetGid,
   SHEET_NAMES,
@@ -113,6 +117,14 @@ export function shiftDateKey(dateKey, deltaDays) {
   return `${y}-${m}-${day}`;
 }
 
+/** Monday of the week containing `dateKey` (week starts Monday). */
+export function startOfWeek(dateKey) {
+  const d = new Date(dateKey + 'T00:00:00');
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  return shiftDateKey(dateKey, diff);
+}
+
 export async function getProfile() {
   return fetchProfile();
 }
@@ -129,8 +141,21 @@ export async function saveProfile(age, heightCm) {
   await putProfile(age, heightCm);
 }
 
-export async function saveTargets(targetKcal, proteinPercent, carbsPercent, fatPercent) {
+export async function saveTargets(
+  targetKcal, proteinPercent, carbsPercent, fatPercent,
+) {
+  const weekStart = startOfWeek(todayKey());
+  const history = await fetchTargetsHistory();
+  const existing = history.find((entry) => entry.date === weekStart);
   await putTargets(targetKcal, proteinPercent, carbsPercent, fatPercent);
+  await putTargetsHistoryRow(existing?._row, weekStart, targetKcal, proteinPercent, carbsPercent, fatPercent);
+}
+
+export async function saveActivitySettings(activityMultiplier, dailyDeficit, goalType, rateKgPerWeek) {
+  const weekStart = startOfWeek(todayKey());
+  const history = await fetchActivityHistory();
+  const existing = history.find((entry) => entry.date === weekStart);
+  await putActivityHistoryRow(existing?._row, weekStart, activityMultiplier, dailyDeficit, goalType, rateKgPerWeek);
 }
 
 /**
@@ -195,6 +220,21 @@ export function workoutCaloriesByTypePoints(workouts, days) {
 
 function round2(value) {
   return value === null || value === undefined ? value : Math.round(value * 100) / 100;
+}
+
+function finiteNumbers(values) {
+  return values.filter((v) => v !== undefined && v !== null && Number.isFinite(v));
+}
+
+function average(values) {
+  const nums = finiteNumbers(values);
+  return nums.length ? nums.reduce((sum, v) => sum + v, 0) / nums.length : null;
+}
+
+function workoutSetKilos(workout) {
+  if (Array.isArray(workout.setKilos) && workout.setKilos.length) return finiteNumbers(workout.setKilos);
+  if (!Number.isFinite(workout.kilos) || !Number.isFinite(workout.sets)) return [];
+  return Array.from({ length: Math.max(0, Math.floor(workout.sets)) }, () => workout.kilos);
 }
 
 /**
@@ -335,15 +375,16 @@ export function gymExerciseSetPoints(workouts, days, gymTemplate, exercise) {
     byDate[w.date] = w;
   });
 
-  const maxSets = entries.reduce((max, w) => Math.max(max, Number(w.sets) || 0), 0);
+  const maxSets = entries.reduce((max, w) => Math.max(max, workoutSetKilos(w).length), 0);
 
   const series = [];
   for (let setIndex = 1; setIndex <= maxSets; setIndex++) {
     series.push(
       dates.map((date) => {
         const w = byDate[date];
-        if (!w || !Number.isFinite(w.sets) || w.sets < setIndex) return null;
-        return Number.isFinite(w.kilos) ? w.kilos : null;
+        if (!w) return null;
+        const setKilos = workoutSetKilos(w);
+        return Number.isFinite(setKilos[setIndex - 1]) ? setKilos[setIndex - 1] : null;
       }),
     );
   }
@@ -372,15 +413,11 @@ export function gymExerciseSummaryStats(workouts, days, gymTemplate, exercise) {
   const startKey = shiftDateKey(endKey, -(days - 1));
   const inWindow = entries.filter((w) => w.date >= startKey && w.date <= endKey);
 
-  const average = (values) => {
-    const nums = values.filter((v) => v !== undefined && v !== null && Number.isFinite(v));
-    return nums.length ? nums.reduce((sum, v) => sum + v, 0) / nums.length : null;
-  };
-
-  const kilosValues = inWindow.map((w) => w.kilos).filter((v) => v !== undefined && v !== null && Number.isFinite(v));
+  const kilosValues = inWindow.flatMap((w) => workoutSetKilos(w));
   const totalKgValues = inWindow
-    .filter((w) => Number.isFinite(w.kilos) && Number.isFinite(w.sets))
-    .map((w) => w.kilos * w.sets);
+    .map((w) => workoutSetKilos(w))
+    .filter((setKilos) => setKilos.length)
+    .map((setKilos) => setKilos.reduce((sum, kg) => sum + kg, 0));
 
   return {
     avgKilos: average(kilosValues),
@@ -416,14 +453,16 @@ export function gymExerciseKilosTrendPoints(workouts, days, gymTemplate, exercis
   let runningMax = null;
   return dates.map((date) => {
     const w = byDate[date];
-    const avg = w && Number.isFinite(w.kilos) ? w.kilos : null;
-    if (avg !== null) runningMax = runningMax === null ? avg : Math.max(runningMax, avg);
+    const setKilos = w ? workoutSetKilos(w) : [];
+    const avg = average(setKilos);
+    const dayMax = setKilos.length ? Math.max(...setKilos) : null;
+    if (dayMax !== null) runningMax = runningMax === null ? dayMax : Math.max(runningMax, dayMax);
     return { x: date, avg, max: runningMax };
   });
 }
 
 /**
- * workout: { date, type, distanceKm, paceMinPerKm, heartRate, runningType, gymTemplate, exercise, reps, kilos, sets, note, calories }
+ * workout: { date, type, distanceKm, paceMinPerKm, heartRate, runningType, gymTemplate, exercise, reps, kilos, sets, setKilos, note, calories }
  * Only the fields relevant to `type` need to be set; the rest are written blank.
  * A Gym workout logs one exercise instance at a time (exercise/reps/kilos/sets
  * are the actual performance that day), separate from the exercise's
@@ -474,6 +513,39 @@ export async function deleteExercise(row) {
 }
 
 /**
+ * Calorie/macro-target snapshots managed on Profile, oldest first.
+ */
+export async function getTargetsHistory() {
+  return fetchTargetsHistory();
+}
+
+export async function deleteTargetsHistoryEntry(row) {
+  await deleteRows(SHEET_NAMES.TARGETS_HISTORY, [row]);
+}
+
+export async function getActivityHistory() {
+  return fetchActivityHistory();
+}
+
+export async function deleteActivityHistoryEntry(row) {
+  await deleteRows(SHEET_NAMES.ACTIVITY_HISTORY, [row]);
+}
+
+export function latestActivityHistory(activityHistory) {
+  return activityHistory.length ? activityHistory[activityHistory.length - 1] : null;
+}
+
+/** Last history entry saved on or before `dateKey`. */
+export function historyEntryForDate(history, dateKey) {
+  let result = null;
+  for (const entry of history) {
+    if (entry.date <= dateKey) result = entry;
+    else break;
+  }
+  return result;
+}
+
+/**
  * Scales an ingredient's per-100g nutrition profile to the given weight.
  */
 export function computeNutritionForWeight(ingredient, weightG) {
@@ -516,8 +588,9 @@ export function dayMacros(entry) {
  */
 export function weeklyMacroStats(entries, weekStartKey, profile) {
   const dates = dateRangeInclusive(weekStartKey, shiftDateKey(weekStartKey, 6));
-  const actual = { protein: 0, carbs: 0, fat: 0 };
+  const actual = { calories: 0, protein: 0, carbs: 0, fat: 0 };
   dates.forEach((date) => {
+    actual.calories += dayTotal(entries[date]);
     const macros = dayMacros(entries[date]);
     actual.protein += macros.protein;
     actual.carbs += macros.carbs;
@@ -535,6 +608,7 @@ export function weeklyMacroStats(entries, weekStartKey, profile) {
   });
 
   return {
+    calories: buildStat(actual.calories, Number.isFinite(profile.targetKcal) ? profile.targetKcal : null),
     protein: buildStat(actual.protein, dailyTargets.proteinGrams),
     carbs: buildStat(actual.carbs, dailyTargets.carbsGrams),
     fat: buildStat(actual.fat, dailyTargets.fatGrams),
@@ -685,18 +759,25 @@ export function computeBmr(weightKg, heightCm, age) {
  * One row per day of the Monday-start week starting at `weekStartKey`, for
  * the Performance page's calorie demand table: { date, weightKg, bmr,
  * demandWithActivity, demandAfterDeficit, eatenKcal, burnedKcal, balance }.
+ * The activity multiplier/deficit applied to each day are whatever was
+ * active in Activity history as of that day, so past weeks reflect what was
+ * actually set back then rather than today's current values.
  * bmr/demandWithActivity/demandAfterDeficit/balance are null on days with no
- * logged weight (BMR needs it); eatenKcal/burnedKcal are always numbers (0
- * if nothing was logged that day). burnedKcal sums the `calories` field
- * across all Workouts entries (Running/Gym/Other) logged that day. balance
- * is eatenKcal − demandAfterDeficit (positive = ate over target that day).
+ * logged weight (BMR needs it) or no activity-history entry yet;
+ * eatenKcal/burnedKcal are always numbers (0 if nothing was logged that
+ * day). burnedKcal sums the `calories` field across all Workouts entries
+ * (Running/Gym/Other) logged that day. balance is eatenKcal −
+ * demandAfterDeficit (positive = ate over target that day).
  */
-export function weeklyCalorieDemandRows(entries, weekStartKey, profile, activityMultiplier, deficit, workouts = []) {
+export function weeklyCalorieDemandRows(entries, weekStartKey, profile, activityHistory, workouts = []) {
   const dates = dateRangeInclusive(weekStartKey, shiftDateKey(weekStartKey, 6));
   return dates.map((date) => {
     const entry = entries[date];
     const weightKg = isFiniteNumber(entry?.weightKg) ? entry.weightKg : null;
     const bmr = weightKg !== null ? computeBmr(weightKg, profile.heightCm, profile.age) : null;
+    const activityForDay = historyEntryForDate(activityHistory, date);
+    const activityMultiplier = activityForDay ? activityForDay.activityMultiplier : null;
+    const deficit = activityForDay ? activityForDay.dailyDeficit : null;
     const demandWithActivity = bmr !== null && isFiniteNumber(activityMultiplier) ? bmr * activityMultiplier : null;
     const demandAfterDeficit = demandWithActivity !== null && isFiniteNumber(deficit)
       ? demandWithActivity - deficit
@@ -739,52 +820,6 @@ export function weeklyCalorieDemandAverageRow(rows) {
     burnedKcal: average('burnedKcal'),
     balance: average('balance'),
   };
-}
-
-const ACTIVITY_MULTIPLIERS_KEY = 'fitness-counter-activity-multipliers';
-const DEFAULT_ACTIVITY_MULTIPLIER = 1.2;
-
-function readActivityMultipliers() {
-  try {
-    return JSON.parse(localStorage.getItem(ACTIVITY_MULTIPLIERS_KEY) || '{}');
-  } catch {
-    return {};
-  }
-}
-
-/** The activity multiplier set for a given week (Monday-start key), defaulting to 1.2 (sedentary). */
-export function getActivityMultiplier(weekStartKey) {
-  const value = readActivityMultipliers()[weekStartKey];
-  return isFiniteNumber(value) ? value : DEFAULT_ACTIVITY_MULTIPLIER;
-}
-
-export function setActivityMultiplier(weekStartKey, multiplier) {
-  const map = readActivityMultipliers();
-  map[weekStartKey] = multiplier;
-  localStorage.setItem(ACTIVITY_MULTIPLIERS_KEY, JSON.stringify(map));
-}
-
-const WEEKLY_DEFICITS_KEY = 'fitness-counter-weekly-deficits';
-const DEFAULT_WEEKLY_DEFICIT = 0;
-
-function readWeeklyDeficits() {
-  try {
-    return JSON.parse(localStorage.getItem(WEEKLY_DEFICITS_KEY) || '{}');
-  } catch {
-    return {};
-  }
-}
-
-/** The daily calorie deficit set for a given week (Monday-start key), defaulting to 0. */
-export function getWeeklyDeficit(weekStartKey) {
-  const value = readWeeklyDeficits()[weekStartKey];
-  return isFiniteNumber(value) ? value : DEFAULT_WEEKLY_DEFICIT;
-}
-
-export function setWeeklyDeficit(weekStartKey, deficit) {
-  const map = readWeeklyDeficits();
-  map[weekStartKey] = deficit;
-  localStorage.setItem(WEEKLY_DEFICITS_KEY, JSON.stringify(map));
 }
 
 export async function loadData() {

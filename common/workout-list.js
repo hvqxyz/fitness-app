@@ -23,6 +23,15 @@ function formatGymGroupHeader(template, sessionEntry) {
 
 function formatGymExerciseDetail(w) {
   const parts = [w.exercise];
+  if (Array.isArray(w.setKilos) && w.setKilos.length) {
+    w.setKilos.forEach((kg, index) => {
+      const setParts = [` - Set ${index + 1}:`];
+      if (w.reps !== undefined) setParts.push(`${w.reps} reps ×`);
+      setParts.push(`${kg} kg`);
+      parts.push(setParts.join(' '));
+    });
+    return parts.join('\n');
+  }
   const setReps = [];
   if (w.sets !== undefined) setReps.push(`${w.sets} sets`);
   if (w.reps !== undefined) setReps.push(`${w.reps} reps`);
@@ -92,6 +101,7 @@ export function renderWorkoutList(listEl, workouts, selectedDate, { onChange, on
     if (subItems.length) {
       const subList = document.createElement('ul');
       subList.className = 'workout-sub-list';
+      console.log(subList);
       subItems.forEach((text) => {
         const subLi = document.createElement('li');
         subLi.textContent = text;

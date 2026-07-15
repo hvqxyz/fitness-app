@@ -7,7 +7,7 @@
   --gridline: #e1e0d9;
   --border: rgba(11, 11, 11, 0.1);
   --accent: rgb(54 130 224 / 0.71);
-  --good: #0ca30c;
+  --good: #199e70;
   --critical: #d03b3b;
 }
 
@@ -21,7 +21,7 @@
     --gridline: #2c2c2a;
     --border: rgba(255, 255, 255, 0.1);
     --accent: #3987e5;
-    --good: #0ca30c;
+    --good: #199e70;
     --critical: #e66767;
   }
 }
@@ -73,7 +73,6 @@ body {
   background: transparent;
   color: var(--accent);
   border: 1px solid var(--accent);
-  margin-top: 0.5rem;
 }
 
 .button:active {
@@ -181,6 +180,61 @@ main {
   color: var(--text-secondary);
 }
 
+.card h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.meal-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.meal-heading-row h2 {
+  margin: 0;
+}
+
+.meal-copy-btn {
+  min-height: 34px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.meal-copy-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.calorie-summary-card {
+  height: 250px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+
+.weight-weight-over-time {
+  min-height: 400px;
+  max-height: 400px;
+}
+
+.tile-loading {
+  min-height: 216px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.tile-loading[hidden] {
+  display: none;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -223,7 +277,6 @@ main {
 .range-toggle {
   display: flex;
   gap: 0.4rem;
-  margin-bottom: 0.75rem;
 }
 
 .range-btn {
@@ -444,13 +497,32 @@ select {
 .inline-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: stretch;
+  gap: 12px;
+  align-items: flex-end;
 }
 
-.inline-form input,
-.inline-form select {
-  flex: 1 1 120px;
+.form-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 220px;
+}
+
+.form-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b5b5b5;
+  margin-left: 2px;
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.button-field {
+  justify-content: flex-end;
 }
 
 .ingredient-form {
@@ -564,27 +636,45 @@ select {
   gap: 0.4rem;
 }
 
-#workout-list {
-  height: 200px;
+#workout-list,
+#activity-history-list,
+#targets-history-list {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--gridline) transparent;
 }
 
-#workout-list::-webkit-scrollbar {
+#workout-list {
+  height: 150px;
+}
+
+#activity-history-list,
+#targets-history-list {
+  height: calc(5 * 3rem + 4 * 0.4rem);
+}
+
+#workout-list::-webkit-scrollbar,
+#activity-history-list::-webkit-scrollbar,
+#targets-history-list::-webkit-scrollbar {
   width: 8px;
 }
 
-#workout-list::-webkit-scrollbar-track {
+#workout-list::-webkit-scrollbar-track,
+#activity-history-list::-webkit-scrollbar-track,
+#targets-history-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
-#workout-list::-webkit-scrollbar-thumb {
+#workout-list::-webkit-scrollbar-thumb,
+#activity-history-list::-webkit-scrollbar-thumb,
+#targets-history-list::-webkit-scrollbar-thumb {
   background: var(--gridline);
   border-radius: 4px;
 }
 
-#workout-list::-webkit-scrollbar-thumb:hover {
+#workout-list::-webkit-scrollbar-thumb:hover,
+#activity-history-list::-webkit-scrollbar-thumb:hover,
+#targets-history-list::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
 
@@ -681,6 +771,35 @@ select {
   padding: 0 0.75rem;
 }
 
+.gym-set-kilos-toggle {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.gym-log-list .gym-set-kilos-toggle input {
+  flex: 0 0 auto;
+}
+
+.gym-set-kilos-fields {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 0.5rem;
+}
+
+.gym-set-kilos-fields[hidden] {
+  display: none;
+}
+
+.gym-log-list .gym-set-kilos-fields input {
+  min-width: 0;
+}
+
 .ingredient-modal {
   background: var(--surface);
   color: var(--text-primary);
@@ -726,6 +845,21 @@ select {
   border: 1px solid var(--critical);
 }
 
+.copy-meal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.copy-meal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .chart-wrap {
   position: relative;
   aspect-ratio: 2.5;
@@ -734,6 +868,17 @@ select {
 .chart-wrap canvas {
   width: 100%;
   height: 100%;
+}
+
+.calories-chart-wrap {
+  height: 280px;
+  aspect-ratio: auto;
+}
+
+.calories-chart-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .chart-loading {
@@ -854,8 +999,12 @@ td.numeric {
   font-variant-numeric: tabular-nums;
 }
 
-tr.selected-row td {
-  background: var(--page);
+td.balance-positive {
+  color: var(--critical);
+}
+
+td.balance-negative {
+  color: var(--good);
 }
 
 tfoot td,
@@ -863,33 +1012,6 @@ tfoot th {
   font-weight: 600;
   border-top: 2px solid var(--gridline);
   border-bottom: none;
-}
-
-.row-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.row-actions button,
-.row-actions a {
-  min-height: 32px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.8rem;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-  border-radius: 8px;
-}
-
-.row-actions .edit-link {
-  background: var(--accent);
-  color: #fff;
-}
-
-.row-actions .delete-day {
-  background: transparent;
-  color: var(--critical);
-  border: 1px solid var(--critical);
 }
 
 #show-more {
@@ -909,4 +1031,70 @@ tfoot th {
 
 .message.error {
   color: var(--critical);
+}
+
+#copy-meal-date {
+  padding: 10px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+#copy-meal-date:hover {
+  border-color: #4f46e5;
+}
+
+#copy-meal-date:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.select-list {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 10px 40px 10px 14px;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
+}
+
+.select-list:hover {
+  border-color: #8f8f8f;
+}
+
+.select-list:focus {
+  border-color: #8f8f8f;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.workout-sub-list li:last-child {
+  margin-bottom: 0;
+}
+
+.workout-sub-list li {
+  white-space: pre-line;
+}
+
+.stat-grid-title {
+  margin: 0 0 16px;
+  padding: 0 4px;
+}
+
+.stat-grid-title p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  letter-spacing: 0.02em;
 }

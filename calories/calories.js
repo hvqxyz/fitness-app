@@ -10,6 +10,9 @@ import {
   setSelectedDate,
   getIngredients,
   getProfile,
+  getTargetsHistory,
+  historyEntryForDate,
+  startOfWeek,
   computeNutritionForWeight,
   getSelectedWeek,
   setSelectedWeek,
@@ -25,7 +28,17 @@ import { initAuthGate } from '../common/auth-ui.js';
 
 const dateCarouselEl = document.getElementById('date-carousel');
 const mealSectionsEl = document.getElementById('meal-sections');
+const copyMealModal = document.getElementById('copy-meal-modal');
+const copyMealForm = document.getElementById('copy-meal-form');
+const copyMealTitle = document.getElementById('copy-meal-title');
+const copyMealDateInput = document.getElementById('copy-meal-date');
+const copyMealTypeSelect = document.getElementById('copy-meal-type');
+const copyMealMessage = document.getElementById('copy-meal-message');
+const copyMealSubmit = document.getElementById('copy-meal-submit');
+const copyMealCancel = document.getElementById('copy-meal-cancel');
+const calorieTotalLineEl = document.getElementById('calorie-total-line');
 const foodTotalEl = document.getElementById('food-total');
+const calorieProgressLoadingEl = document.getElementById('calorie-progress-loading');
 const calorieProgressEl = document.getElementById('calorie-progress');
 const calorieProgressFillEl = document.getElementById('calorie-progress-fill');
 const calorieProgressLabelEl = document.getElementById('calorie-progress-label');
@@ -36,6 +49,7 @@ const macroRingConfigs = [
   { key: 'fat', gramsKey: 'fatGrams', item: document.getElementById('fat-ring-item'), canvas: document.getElementById('fat-ring'), label: 'Fat' },
 ];
 const caloriesChartCanvas = document.getElementById('calories-chart');
+const caloriesChartLoading = document.getElementById('calories-chart-loading');
 const syncMessage = document.getElementById('sync-message');
 const caloriesSubnavButtons = document.querySelectorAll('#calories-subnav .range-btn');
 const caloriesViewByName = {
@@ -45,9 +59,10 @@ const caloriesViewByName = {
 const chartRangeButtons = document.querySelectorAll('#chart-range-toggle .range-btn');
 const weekCarouselEl = document.getElementById('week-carousel');
 const weekMacroConfigs = [
-  { key: 'protein', fillEl: document.getElementById('week-protein-progress-fill'), labelEl: document.getElementById('week-protein-progress-label') },
-  { key: 'carbs', fillEl: document.getElementById('week-carbs-progress-fill'), labelEl: document.getElementById('week-carbs-progress-label') },
-  { key: 'fat', fillEl: document.getElementById('week-fat-progress-fill'), labelEl: document.getElementById('week-fat-progress-label') },
+  { key: 'calories', fillEl: document.getElementById('week-calories-progress-fill'), labelEl: document.getElementById('week-calories-progress-label'), unit: 'kcal' },
+  { key: 'protein', fillEl: document.getElementById('week-protein-progress-fill'), labelEl: document.getElementById('week-protein-progress-label'), unit: 'g' },
+  { key: 'carbs', fillEl: document.getElementById('week-carbs-progress-fill'), labelEl: document.getElementById('week-carbs-progress-label'), unit: 'g' },
+  { key: 'fat', fillEl: document.getElementById('week-fat-progress-fill'), labelEl: document.getElementById('week-fat-progress-label'), unit: 'g' },
 ];
 
 let caloriesChart = null;
@@ -57,7 +72,17 @@ let selectedDate = getSelectedDate();
 let selectedWeek = getSelectedWeek();
 let ingredients = [];
 let profile = { targetKcal: null, proteinPercent: null, carbsPercent: null, fatPercent: null };
+let targetsHistory = [];
 const mealRefs = {};
+const lastFoodsByMeal = {};
+let copySourceMeal = null;
+
+MEAL_TYPES.forEach((meal) => {
+  const option = document.createElement('option');
+  option.value = meal;
+  option.textContent = meal;
+  copyMealTypeSelect.appendChild(option);
+});
 
 MEAL_TYPES.forEach((meal) => {
   const section = document.createElement('section');
@@ -72,9 +97,12 @@ MEAL_TYPES.forEach((meal) => {
       <input type="number" class="food-weight-input" placeholder="grams" step="1" min="1" max="5000" inputmode="numeric" required />
       <button type="submit" class="button">Add</button>
     </form>
-    <p class="ingredient-sub no-foods-hint" hidden>No foods yet — add some in Summary.</p>
+    <p class="ingredient-sub no-foods-hint" hidden>No foods yet — add some in Profile.</p>
     <ul class="food-list"></ul>
-    <p class="total-line">Subtotal: <span class="meal-subtotal">0</span> kcal</p>
+    <div style="flex-direction: row; display: flex; justify-content: space-between;">
+        <p class="total-line">Subtotal: <span class="meal-subtotal">0</span> kcal</p>
+        <button type="button" class="button-small secondary meal-copy-btn" disabled>Copy</button>
+    </div>
   `;
 
   const form = section.querySelector('form');
@@ -83,8 +111,11 @@ MEAL_TYPES.forEach((meal) => {
   const hint = section.querySelector('.no-foods-hint');
   const list = section.querySelector('.food-list');
   const subtotalEl = section.querySelector('.meal-subtotal');
+  const copyBtn = section.querySelector('.meal-copy-btn');
 
   const search = createFoodSearch(searchContainer, ingredients, () => {});
+
+  copyBtn.addEventListener('click', () => openCopyMealModal(meal));
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -107,9 +138,48 @@ MEAL_TYPES.forEach((meal) => {
     }
   });
 
-  mealRefs[meal] = { search, weightInput, form, hint, list, subtotalEl };
+  mealRefs[meal] = { search, weightInput, form, hint, list, subtotalEl, copyBtn };
   mealSectionsEl.appendChild(section);
 });
+
+function cloneFoodForMeal(food, meal) {
+  const { _row, meal: _meal, ...copy } = food;
+  return { ...copy, meal };
+}
+
+function setCopyMealMessage(text, type) {
+  copyMealMessage.textContent = text;
+  copyMealMessage.className = `message ${type || ''}`.trim();
+}
+
+function closeCopyMealModal() {
+  if (copyMealModal.close) {
+    copyMealModal.close();
+  } else {
+    copyMealModal.removeAttribute('open');
+  }
+}
+
+function openCopyMealModal(meal) {
+  const foods = lastFoodsByMeal[meal] || [];
+  if (foods.length === 0) {
+    showSyncMessage(`No foods to copy from ${meal}.`, 'error');
+    return;
+  }
+
+  copySourceMeal = meal;
+  copyMealTitle.textContent = `Copy ${meal}`;
+  copyMealDateInput.value = selectedDate;
+  copyMealTypeSelect.value = meal;
+  copyMealSubmit.disabled = false;
+  setCopyMealMessage('', '');
+
+  if (copyMealModal.showModal) {
+    copyMealModal.showModal();
+  } else {
+    copyMealModal.setAttribute('open', '');
+  }
+}
 
 function populateFoodSelects() {
   const hasFoods = ingredients.length > 0;
@@ -127,6 +197,44 @@ function showSyncMessage(text, type) {
   syncMessage.textContent = text;
   syncMessage.className = `message ${type || ''}`.trim();
 }
+
+function setCalorieLoading(isLoading) {
+  calorieProgressLoadingEl.hidden = !isLoading;
+  calorieTotalLineEl.hidden = isLoading;
+  if (isLoading) {
+    calorieProgressEl.hidden = true;
+    macroRingsEl.hidden = true;
+  }
+}
+
+function setCaloriesChartLoading(isLoading) {
+  caloriesChartLoading.hidden = !isLoading;
+}
+
+copyMealCancel.addEventListener('click', closeCopyMealModal);
+
+copyMealForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const foods = lastFoodsByMeal[copySourceMeal] || [];
+  const targetDate = copyMealDateInput.value;
+  const targetMeal = copyMealTypeSelect.value;
+  if (!copySourceMeal || foods.length === 0 || !targetDate || !targetMeal) return;
+
+  copyMealSubmit.disabled = true;
+  setCopyMealMessage('Copying…', '');
+  try {
+    for (const food of foods) {
+      await addFood(targetDate, cloneFoodForMeal(food, targetMeal));
+    }
+    closeCopyMealModal();
+    if (targetDate === selectedDate) await render();
+    showSyncMessage(`Copied ${copySourceMeal} to ${targetDate} ${targetMeal}.`, 'success');
+  } catch (err) {
+    setCopyMealMessage(`Couldn't copy meal: ${err.message}`, 'error');
+  } finally {
+    copyMealSubmit.disabled = false;
+  }
+});
 
 async function renderChart(data) {
   const resolvedData = data || (await loadData());
@@ -169,6 +277,7 @@ async function renderChart(data) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
         y: { beginAtZero: false },
       },
@@ -180,31 +289,37 @@ chartRangeButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
     chartRangeDays = parseInt(btn.dataset.range, 10);
     chartRangeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-    renderChart().catch(() => {});
+    renderAnalytics().catch(() => {});
   });
 });
 
 let lastTotalKcal = 0;
 
-function renderCalorieRing(totalKcal) {
+function targetsForDate(dateKey) {
+  const targets = historyEntryForDate(targetsHistory, startOfWeek(dateKey));
+  if (targets) return targets;
+  return targetsHistory.length ? {} : profile;
+}
+
+function renderCalorieRing(totalKcal, targets = targetsForDate(selectedDate)) {
   lastTotalKcal = totalKcal;
-  if (!profile.targetKcal) {
+  if (!targets.targetKcal) {
     calorieProgressEl.hidden = true;
     return;
   }
   calorieProgressEl.hidden = false;
-  const percent = Math.round((totalKcal / profile.targetKcal) * 100);
+  const percent = Math.round((totalKcal / targets.targetKcal) * 100);
   calorieProgressFillEl.style.width = `${Math.min(percent, 100)}%`;
-  calorieProgressFillEl.classList.toggle('over', totalKcal > profile.targetKcal);
+  calorieProgressFillEl.classList.toggle('over', totalKcal > targets.targetKcal);
   calorieProgressLabelEl.textContent =
-    `${Math.round(totalKcal).toLocaleString()} of ${profile.targetKcal.toLocaleString()} kcal (${percent}%)`;
+    `${Math.round(totalKcal).toLocaleString()} of ${targets.targetKcal.toLocaleString()} kcal (${percent}%)`;
 }
 
 let lastMacroActuals = { fiber: 0, carbs: 0, satFat: 0, unsatFat: 0, protein: 0 };
 
-function renderMacroRings(macros) {
+function renderMacroRings(macros, targetsProfile = targetsForDate(selectedDate)) {
   lastMacroActuals = macros;
-  const targets = macroGramTargets(profile);
+  const targets = macroGramTargets(targetsProfile);
   const anyTarget = macroRingConfigs.some((cfg) => targets[cfg.gramsKey]);
   macroRingsEl.hidden = !anyTarget;
   if (!anyTarget) return;
@@ -227,7 +342,7 @@ function renderMacroRings(macros) {
 }
 
 function renderWeeklyMacroProgress(entries) {
-  const stats = weeklyMacroStats(entries, selectedWeek, profile);
+  const stats = weeklyMacroStats(entries, selectedWeek, targetsForDate(selectedWeek));
   weekMacroConfigs.forEach((cfg) => {
     const { actual, target, avgActual, avgTarget } = stats[cfg.key];
     const item = cfg.fillEl.closest('.week-macro-item');
@@ -240,18 +355,24 @@ function renderWeeklyMacroProgress(entries) {
     cfg.fillEl.style.width = `${Math.min(percent, 100)}%`;
     cfg.fillEl.classList.toggle('over', actual > target);
     cfg.labelEl.textContent =
-      `${Math.round(actual)} of ${Math.round(target)}g (${percent}%) — ` +
-      `avg ${Math.round(avgActual)} of ${Math.round(avgTarget)}g/day`;
+      `${Math.round(actual)} of ${Math.round(target)} ${cfg.unit} (${percent}%) — ` +
+      `avg ${Math.round(avgActual)} of ${Math.round(avgTarget)} ${cfg.unit}/day`;
   });
 }
 
 async function renderAnalytics(data) {
-  const resolvedData = data || (await loadData());
-  await renderChart(resolvedData);
-  renderWeeklyMacroProgress(resolvedData.entries);
+  setCaloriesChartLoading(true);
+  try {
+    const resolvedData = data || (await loadData());
+    await renderChart(resolvedData);
+    renderWeeklyMacroProgress(resolvedData.entries);
+  } finally {
+    setCaloriesChartLoading(false);
+  }
 }
 
 async function render() {
+  setCalorieLoading(true);
   try {
     const data = await loadData();
     const entry = data.entries[selectedDate] || {};
@@ -264,6 +385,8 @@ async function render() {
       const mealFoods = foods
         .map((food, index) => ({ food, index }))
         .filter(({ food }) => (food.meal || DEFAULT_MEAL) === meal);
+      lastFoodsByMeal[meal] = mealFoods.map(({ food }) => food);
+      mealRefs[meal].copyBtn.disabled = mealFoods.length === 0;
 
       mealFoods.forEach(({ food, index }) => {
         const li = document.createElement('li');
@@ -302,8 +425,10 @@ async function render() {
     renderMacroRings(macros);
 
     if (!caloriesViewByName.Analytics.hidden) await renderAnalytics(data);
+    setCalorieLoading(false);
     showSyncMessage('', '');
   } catch (err) {
+    setCalorieLoading(false);
     showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
   }
 }
@@ -314,6 +439,12 @@ function setCaloriesView(view) {
   });
   caloriesSubnavButtons.forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.view === view)));
   if (view === 'Analytics') renderAnalytics().catch(() => {});
+  if (view === 'Tracker') {
+    requestAnimationFrame(() => {
+      renderCalorieRing(lastTotalKcal);
+      renderMacroRings(lastMacroActuals);
+    });
+  }
 }
 
 caloriesSubnavButtons.forEach((btn) => {
@@ -336,8 +467,9 @@ async function boot() {
   });
 
   try {
-    ingredients = await getIngredients();
-    profile = await getProfile();
+    [ingredients, profile, targetsHistory] = await Promise.all([
+      getIngredients(), getProfile(), getTargetsHistory(),
+    ]);
   } catch (err) {
     showSyncMessage(`Couldn't reach Google Sheets: ${err.message}`, 'error');
     ingredients = [];

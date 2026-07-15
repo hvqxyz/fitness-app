@@ -54,7 +54,7 @@ async function renderStats(entries) {
     bmiSubEl.textContent = bmiCategory(bmi) || '';
   } else {
     bmiValueEl.textContent = '—';
-    bmiSubEl.textContent = profile.heightCm ? 'Log a weight' : 'Set height in Summary';
+    bmiSubEl.textContent = profile.heightCm ? 'Log a weight' : 'Set height in Profile';
   }
 
   trend7ValueEl.textContent = formatTrend(weightTrend(entries, 7));
@@ -65,7 +65,13 @@ async function renderStats(entries) {
 
 async function renderChart(data) {
   const resolvedData = data || (await loadData());
-  const dates = Object.keys(resolvedData.entries).sort().slice(-chartRangeDays);
+  const weightDates = Object.keys(resolvedData.entries)
+    .filter((date) => resolvedData.entries[date]?.weightKg !== undefined)
+    .sort();
+  const today = todayKey();
+  const lastWeightDate = weightDates[weightDates.length - 1];
+  const endKey = lastWeightDate && lastWeightDate > today ? lastWeightDate : today;
+  const dates = dateRangeInclusive(shiftDateKey(endKey, -(chartRangeDays - 1)), endKey);
   const ctx = document.getElementById("weightChart");
   const points = dates.map((date) => resolvedData.entries[date]?.weightKg ?? null);
   const logged = points.filter((v) => v !== null && v !== undefined);
@@ -82,9 +88,10 @@ async function renderChart(data) {
     backgroundColor: weightColor,
     pointBackgroundColor: weightColor,
     pointRadius: 3,
+    spanGaps: true,
   },
     {
-      label: `Average (${average.toFixed(1)} kg)`,
+      label: average !== null ? `Average (${average.toFixed(1)} kg)` : 'Average',
       data: dates.map(() => average),
       borderColor: '#898781',
       borderDash: [6, 4],

@@ -9,10 +9,10 @@ import {
   weeklyCalorieDemandRows,
   weeklyCalorieDemandAverageRow,
   computeBmr,
-  getActivityMultiplier,
-  setActivityMultiplier,
-  getWeeklyDeficit,
-  setWeeklyDeficit,
+  getTargetsHistory,
+  getActivityHistory,
+  latestActivityHistory,
+  historyEntryForDate,
   bmiCategory,
 } from '../common/storage.js';
 import { createWeekCarousel } from '../common/week-carousel.js';
@@ -24,14 +24,17 @@ const avgBmiSubEl = document.getElementById('avg-bmi-sub');
 const avgWeightValueEl = document.getElementById('avg-weight-value');
 const weightTrendValueEl = document.getElementById('weight-trend-value');
 const prevWeekAvgWeightValueEl = document.getElementById('prev-week-avg-weight-value');
-const activityMultiplierInput = document.getElementById('activity-multiplier-input');
-const weeklyDeficitInput = document.getElementById('weekly-deficit-input');
 const calorieDemandBody = document.getElementById('calorie-demand-body');
 const calorieDemandFoot = document.getElementById('calorie-demand-foot');
 const weeklyWeightChartCanvas = document.getElementById('weekly-weight-chart');
 const lastAvgWeightValueEl = document.getElementById('last-avg-weight-value');
 const lastAvgWeightBmrValueEl = document.getElementById('last-avg-weight-bmr-value');
 const lastAvgWeightDemandValueEl = document.getElementById('last-avg-weight-demand-value');
+const actualTargetKcalValueEl = document.getElementById('actual-target-kcal-value');
+const actualGoalValueEl = document.getElementById('actual-goal-value');
+const calorieDemandMethodButtons = document.querySelectorAll('#calorie-demand-method-toggle .range-btn');
+const multiplierMethodView = document.getElementById('multiplier-method-view');
+const activityBasedMethodView = document.getElementById('activity-based-method-view');
 
 let selectedWeek = getSelectedWeek();
 let weeklyWeightChart = null;
@@ -108,6 +111,13 @@ function numericCell(value, digits = 0) {
   return td;
 }
 
+function balanceCell(value) {
+  const td = numericCell(value);
+  if (value > 0) td.classList.add('balance-positive');
+  if (value < 0) td.classList.add('balance-negative');
+  return td;
+}
+
 function buildCalorieDemandRow(labelText, row) {
   const tr = document.createElement('tr');
   const labelTd = document.createElement('td');
@@ -120,7 +130,7 @@ function buildCalorieDemandRow(labelText, row) {
     numericCell(row.demandAfterDeficit),
     numericCell(row.eatenKcal),
     numericCell(row.burnedKcal),
-    numericCell(row.balance),
+    balanceCell(row.balance),
   );
   return tr;
 }
@@ -136,7 +146,9 @@ function renderCalorieDemandTable(rows) {
 }
 
 async function render() {
-  const [data, profile, workouts] = await Promise.all([loadData(), getProfile(), getWorkouts()]);
+  const [data, profile, workouts, targetsHistory, activityHistory] = await Promise.all([
+    loadData(), getProfile(), getWorkouts(), getTargetsHistory(), getActivityHistory(),
+  ]);
   const stats = weeklyPerformanceStats(data.entries, selectedWeek, profile.heightCm);
 
   avgBmiValueEl.textContent = stats.avgBmi !== null ? stats.avgBmi.toFixed(1) : '—';
@@ -148,10 +160,19 @@ async function render() {
   const weightPoints = weeklyAvgWeightPoints(data.entries, selectedWeek, 4);
   renderWeeklyWeightChart(weightPoints);
 
-  const activityMultiplier = getActivityMultiplier(selectedWeek);
-  const deficit = getWeeklyDeficit(selectedWeek);
-  activityMultiplierInput.value = activityMultiplier;
-  weeklyDeficitInput.value = deficit;
+  const currentActivity = latestActivityHistory(activityHistory);
+  const activityMultiplier = currentActivity ? currentActivity.activityMultiplier : null;
+  const selectedTargets = historyEntryForDate(targetsHistory, selectedWeek);
+  const selectedActivity = historyEntryForDate(activityHistory, selectedWeek);
+
+  actualTargetKcalValueEl.textContent = Number.isFinite(selectedTargets?.targetKcal)
+    ? `${Math.round(selectedTargets.targetKcal).toLocaleString()} kcal`
+    : '—';
+  actualGoalValueEl.textContent = selectedActivity
+    && selectedActivity.goalType
+    && Number.isFinite(selectedActivity.rateKgPerWeek)
+    ? `${selectedActivity.goalType} ${selectedActivity.rateKgPerWeek} kg/week`
+    : '—';
 
   const lastAvgWeight = stats.prevAvgWeight;
   const lastAvgWeightBmr = lastAvgWeight !== null ? computeBmr(lastAvgWeight, profile.heightCm, profile.age) : null;
@@ -162,23 +183,23 @@ async function render() {
   lastAvgWeightBmrValueEl.textContent = lastAvgWeightBmr !== null ? Math.round(lastAvgWeightBmr) : '—';
   lastAvgWeightDemandValueEl.textContent = lastAvgWeightDemand !== null ? Math.round(lastAvgWeightDemand) : '—';
 
-  const rows = weeklyCalorieDemandRows(data.entries, selectedWeek, profile, activityMultiplier, deficit, workouts);
+  const rows = weeklyCalorieDemandRows(data.entries, selectedWeek, profile, activityHistory, workouts);
   renderCalorieDemandTable(rows);
 }
 
-activityMultiplierInput.addEventListener('change', () => {
-  const value = parseFloat(activityMultiplierInput.value);
-  if (!Number.isFinite(value) || value <= 0) return;
-  setActivityMultiplier(selectedWeek, value);
-  render().catch(() => {});
+function setCalorieDemandMethod(method) {
+  multiplierMethodView.hidden = method !== 'multiplier';
+  activityBasedMethodView.hidden = method !== 'activity-based';
+  calorieDemandMethodButtons.forEach((btn) => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.method === method));
+  });
+}
+
+calorieDemandMethodButtons.forEach((btn) => {
+  btn.addEventListener('click', () => setCalorieDemandMethod(btn.dataset.method));
 });
 
-weeklyDeficitInput.addEventListener('change', () => {
-  const value = parseFloat(weeklyDeficitInput.value);
-  if (!Number.isFinite(value)) return;
-  setWeeklyDeficit(selectedWeek, value);
-  render().catch(() => {});
-});
+setCalorieDemandMethod('multiplier');
 
 function boot() {
   createWeekCarousel(weekCarouselEl, selectedWeek, (newWeekStart) => {
