@@ -1,0 +1,31 @@
+.number-input {
+  height: 36px;
+  width: 100%;
+  padding: 0 16px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: #f2f2f2;
+  font-size: 15px;
+  font-weight: 400;
+  outline: none;
+  transition: border-color .2s ease,
+  background .2s ease,
+  box-shadow .2s ease;
+}
+
+.number-input:disabled {
+  opacity: 0.5;
+}
+
+/* Hide the native up/down spinner for a cleaner look, matching the flat
+   single-line style of SearchInput's input. */
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-input[type="number"] {
+  -moz-appearance: textfield;
+}

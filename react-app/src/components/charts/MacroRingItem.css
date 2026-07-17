@@ -1,0 +1,58 @@
+.macro-ring-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.macro-ring {
+  position: relative;
+  width: 90px;
+  height: 90px;
+}
+
+.macro-ring svg {
+  width: 100%;
+  height: 100%;
+}
+
+.macro-ring-track {
+  fill: none;
+  stroke: #363636;
+}
+
+.macro-ring-progress {
+  fill: none;
+  stroke: #3b82f6;
+
+  stroke-linecap: round;
+
+  transform: rotate(-90deg);
+  transform-origin: center;
+
+  transition: stroke-dashoffset 0.35s ease;
+}
+
+.macro-ring-center {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.macro-ring-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.macro-ring-title {
+  margin: 0;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  color: var(--text-secondary);
+}

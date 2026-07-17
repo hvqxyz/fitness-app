@@ -1,0 +1,41 @@
+.progress-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.progress-bar-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.progress-bar-chart-title {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.progress-bar-chart-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.progress-bar-chart-track {
+  position: relative;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.progress-bar-chart-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--accent);
+  transition: width .25s ease;
+}
+
+.progress-bar-chart-fill.over {
+  background: var(--critical);
+}

@@ -1,0 +1,110 @@
+.food-item-list-container {
+  margin: 0.75rem 0;
+}
+
+.food-item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.food-item-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 42px;
+  padding: 0.65rem 0;
+
+  border-bottom: 1px solid var(--gridline);
+}
+
+.food-item-list-row:last-child {
+  border-bottom: none;
+}
+
+.food-item-list-name {
+  flex: 1;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  color: var(--text);
+}
+
+.food-item-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.food-item-list-value {
+  width: 72px;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+.app-button.food-item-list-remove {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+
+  border: none;
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-button.food-item-list-remove:hover {
+  color: var(--critical);
+}
+
+.food-item-list-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+
+  width: 100%;
+  padding: 0.75rem 0;
+
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--gridline);
+
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition:
+          color 0.15s ease,
+          background 0.15s ease;
+}
+
+.food-item-list-toggle svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.food-item-list-toggle:hover {
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.food-item-list-toggle:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.food-item-list-toggle:focus-visible {
+  outline: none;
+  color: var(--primary);
+}
