@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { saveTargets, deleteTargetsHistoryEntry, startOfWeek, todayKey } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 
 export function TargetsOnlyView({ profile, targetsHistory, onSaved }) {
   const [targetKcal, setTargetKcal] = useState('');
@@ -55,22 +56,17 @@ export function TargetsOnlyView({ profile, targetsHistory, onSaved }) {
       <section className="card" style={{ marginTop: '10px' }}>
         <h2>Targets</h2>
         <form className="ingredient-form" onSubmit={handleSubmit}>
-          <input
-            type="number"
+          <NumberInput
             placeholder="Target calories / day"
             step="1"
             min="0"
-            inputMode="numeric"
             value={targetKcal}
-            onChange={(e) => setTargetKcal(e.target.value)}
+            onChange={setTargetKcal}
           />
           <div className="ingredient-grid">
-            <input type="number" placeholder="Protein %" step="1" min="0" max="100" inputMode="numeric"
-              value={protein} onChange={(e) => setProtein(e.target.value)} />
-            <input type="number" placeholder="Carbs %" step="1" min="0" max="100" inputMode="numeric"
-              value={carbs} onChange={(e) => setCarbs(e.target.value)} />
-            <input type="number" placeholder="Fat %" step="1" min="0" max="100" inputMode="numeric"
-              value={fat} onChange={(e) => setFat(e.target.value)} />
+            <NumberInput placeholder="Protein %" step="1" min="0" max="100" value={protein} onChange={setProtein} />
+            <NumberInput placeholder="Carbs %" step="1" min="0" max="100" value={carbs} onChange={setCarbs} />
+            <NumberInput placeholder="Fat %" step="1" min="0" max="100" value={fat} onChange={setFat} />
           </div>
           <p className="ingredient-sub">{percentHint}</p>
           <Button type="submit">Save targets</Button>

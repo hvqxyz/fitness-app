@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Chart from 'chart.js/auto';
+import { useCallback, useEffect, useState } from 'react';
 import {
   loadData,
   upsertWeight,
@@ -15,9 +14,10 @@ import {
   shiftDateKey,
   dateRangeInclusive,
 } from '../common/storage.js';
-import { DateCarousel } from '../components/DateCarousel.jsx';
+import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { NumberInput } from '../components/inputs/NumberInput.jsx';
 import { Button } from '../components/buttons/Button.jsx';
+import { LineChart } from '../components/charts/LineChart.jsx';
 
 function formatTrend(trend) {
   if (!trend) return '—';
@@ -32,13 +32,10 @@ const RANGE_OPTIONS = [7, 30, 90];
 export function WeightPage() {
   const [selectedDate, setSelectedDateState] = useState(getSelectedDate());
   const [weightInput, setWeightInput] = useState('');
-  const [stats, setStats] = useState({ bmi: null, bmiSub: '', trend7: '—', trend30: '—', meanDev: '—' });
+  const [stats, setStats] = useState(null);
   const [syncMessage, setSyncMessage] = useState({ text: '', type: '' });
   const [chartRangeDays, setChartRangeDays] = useState(30);
   const [entries, setEntries] = useState(null);
-
-  const canvasRef = useRef(null);
-  const chartRef = useRef(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -68,56 +65,15 @@ export function WeightPage() {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    if (!entries || !canvasRef.current) return;
-    const weightDates = Object.keys(entries)
-      .filter((date) => entries[date]?.weightKg !== undefined)
-      .sort();
-    const today = todayKey();
-    const lastWeightDate = weightDates[weightDates.length - 1];
-    const endKey = lastWeightDate && lastWeightDate > today ? lastWeightDate : today;
-    const dates = dateRangeInclusive(shiftDateKey(endKey, -(chartRangeDays - 1)), endKey);
-    const points = dates.map((date) => entries[date]?.weightKg ?? null);
-    const logged = points.filter((v) => v !== null && v !== undefined);
-    const average = logged.length > 0 ? logged.reduce((sum, v) => sum + v, 0) / logged.length : null;
-
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const weightColor = isDarkMode ? '#3987e5' : '#2a78d6';
-
-    chartRef.current?.destroy();
-    chartRef.current = new Chart(canvasRef.current, {
-      type: 'line',
-      data: {
-        labels: dates,
-        datasets: [
-          {
-            label: 'Weight (kg)',
-            data: points,
-            borderColor: weightColor,
-            backgroundColor: weightColor,
-            pointBackgroundColor: weightColor,
-            pointRadius: 3,
-            spanGaps: true,
-          },
-          {
-            label: average !== null ? `Average (${average.toFixed(1)} kg)` : 'Average',
-            data: dates.map(() => average),
-            borderColor: '#898781',
-            borderDash: [6, 4],
-            borderWidth: 1.5,
-            pointRadius: 0,
-            fill: false,
-          },
-        ],
-      },
-      options: { responsive: true, scales: { y: { beginAtZero: false } } },
-    });
-
-    return () => {
-      chartRef.current?.destroy();
-      chartRef.current = null;
-    };
-  }, [entries, chartRangeDays]);
+  const weightDates = entries
+    ? Object.keys(entries).filter((date) => entries[date]?.weightKg !== undefined).sort()
+    : [];
+  const today = todayKey();
+  const lastWeightDate = weightDates[weightDates.length - 1];
+  const endKey = lastWeightDate && lastWeightDate > today ? lastWeightDate : today;
+  const chartDates = entries ? dateRangeInclusive(shiftDateKey(endKey, -(chartRangeDays - 1)), endKey) : [];
+  const weightPoints = chartDates.map((date) => entries?.[date]?.weightKg ?? null);
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   function handleDateChange(key) {
     setSelectedDate(key);
@@ -162,24 +118,24 @@ export function WeightPage() {
       <section className="stat-grid">
         <div className="stat-tile">
           <div className="stat-label">BMI</div>
-          <div className="stat-value">{stats.bmi ?? '—'}</div>
-          <div className="stat-sub">{stats.bmiSub}</div>
+          <div className="stat-value">{stats?.bmi ?? '—'}</div>
+          <div className="stat-sub">{stats?.bmiSub ?? '—'}</div>
         </div>
         <div className="stat-tile">
           <div className="stat-label">7-day trend</div>
-          <div className="stat-value">{stats.trend7}</div>
+          <div className="stat-value">{stats?.trend7 ?? '—'}</div>
         </div>
         <div className="stat-tile">
           <div className="stat-label">30-day trend</div>
-          <div className="stat-value">{stats.trend30}</div>
+          <div className="stat-value">{stats?.trend30 ?? '—'}</div>
         </div>
         <div className="stat-tile">
           <div className="stat-label">30-day Mean deviation</div>
-          <div className="stat-value">{stats.meanDev}</div>
+          <div className="stat-value">{stats?.meanDev ?? '—'}</div>
         </div>
       </section>
 
-      <section className="card">
+      <section className="card card-chart">
         <h2>Weight over time</h2>
         <div className="range-toggle">
           {RANGE_OPTIONS.map((days) => (
@@ -194,7 +150,13 @@ export function WeightPage() {
             </button>
           ))}
         </div>
-        <canvas ref={canvasRef}></canvas>
+        <LineChart
+          labels={chartDates}
+          values={weightPoints}
+          color={isDarkMode ? '#3987e5' : '#2a78d6'}
+          datasetLabel="Weight (kg)"
+          formatAverageLabel={(avg) => `Average (${avg.toFixed(1)} kg)`}
+        />
       </section>
     </>
   );

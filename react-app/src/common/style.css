@@ -174,6 +174,12 @@ main {
   color: var(--text-secondary);
 }
 
+.card-chart {
+  display: flex;
+  gap: 0.75rem;
+  flex-direction: column;
+}
+
 .meal-heading-row {
   display: flex;
   align-items: center;
@@ -344,112 +350,6 @@ main {
   font-weight: 400;
 }
 
-.date-carousel {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-}
-
-.date-nav {
-  flex: 0 0 auto;
-  min-width: 36px;
-  min-height: 44px;
-  padding: 0;
-  background: transparent;
-  color: var(--accent);
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.date-fallback {
-  flex: 0 0 auto;
-  width: 40px;
-  min-height: 44px;
-  padding: 0;
-  border: 1px solid var(--gridline);
-  border-radius: 8px;
-  background: var(--page);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.date-fallback::-webkit-datetime-edit {
-  display: none;
-}
-
-.date-fallback::-webkit-calendar-picker-indicator {
-  margin: 0;
-  padding: 0;
-}
-
-.date-strip {
-  display: flex;
-  gap: 0.4rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  padding: 0.15rem 0;
-}
-
-.date-strip::-webkit-scrollbar {
-  display: none;
-}
-
-.date-pill {
-  scroll-snap-align: center;
-  flex: 0 0 auto;
-  min-width: 44px;
-  min-height: 56px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--gridline);
-  border-radius: 12px;
-  background: var(--page);
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-}
-
-.date-pill .day {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.date-pill.today {
-  border-color: var(--good);
-}
-
-.date-pill.today .dow,
-.date-pill.today .day {
-  color: var(--good);
-}
-
-.date-pill.future {
-  opacity: 0.55;
-}
-
-.date-pill.future .day {
-  color: var(--text-secondary);
-}
-
-.date-pill.selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  opacity: 1;
-}
-
-.date-pill.selected .dow,
-.date-pill.selected .day {
-  color: #fff;
-}
-
 label {
   display: block;
   font-size: 0.85rem;
@@ -544,7 +444,7 @@ select {
   min-width: 0;
 }
 
-.food-weight-row .button {
+.food-weight-row .app-button {
   flex: none;
 }
 
@@ -647,28 +547,17 @@ select {
   gap: 0.5rem 1rem;
 }
 
-.food-list li.workout-group-item {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.workout-group-header {
+.meal-section-header-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  flex-shrink: 0;
 }
 
-.workout-sub-list {
-  list-style: disc;
-  margin: 0;
-  padding-left: 1.25rem;
-  font-size: 0.85rem;
+.meal-section-subtotal {
+  font-size: 0.8rem;
   color: var(--text-secondary);
-}
-
-.workout-sub-list li {
-  padding: 0.1rem 0;
+  white-space: nowrap;
 }
 
 .gym-log-list {
@@ -699,12 +588,6 @@ select {
 .gym-log-list .gym-log-fields input {
   flex: 1 1 70px;
   min-width: 0;
-}
-
-.gym-log-list .gym-log-fields button {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 0 0.75rem;
 }
 
 .gym-set-kilos-toggle {
@@ -958,14 +841,6 @@ tfoot th {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
-.workout-sub-list li:last-child {
-  margin-bottom: 0;
-}
-
-.workout-sub-list li {
-  white-space: pre-line;
-}
-
 .stat-grid-title {
   margin: 0 0 16px;
   padding: 0 4px;
@@ -977,4 +852,74 @@ tfoot th {
   font-weight: 600;
   color: #f3f4f6;
   letter-spacing: 0.02em;
+}
+
+
+
+.meal-summary {
+  margin-top: 1rem;
+
+  border: 1px solid var(--gridline);
+  border-radius: 18px;
+
+  background: rgba(255,255,255,.015);
+
+  overflow: hidden;
+}
+
+.meal-summary-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 1rem 1.25rem;
+
+  padding: 1rem;
+}
+
+.meal-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+
+.meal-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: .5rem;
+}
+
+.meal-summary-title {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+
+  font-size: .9rem;
+  font-weight: 600;
+
+  color: var(--text);
+}
+
+.meal-summary-title svg {
+  color: var(--primary);
+}
+
+.meal-summary-value {
+  font-size: .82rem;
+  font-weight: 500;
+
+  color: var(--text-secondary);
+
+  white-space: nowrap;
+}
+
+.meal-summary-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  border-top: 1px solid var(--gridline);
+
+  background: rgba(255,255,255,.01);
 }

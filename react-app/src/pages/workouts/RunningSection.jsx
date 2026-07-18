@@ -2,13 +2,16 @@ import { useState } from 'react';
 import {
   addWorkout,
   runningSummaryStats,
+  runningActivityPoints,
   paceToDecimalMinutes,
   decimalMinutesToPaceLabel,
 } from '../../common/storage.js';
-import { renderRunningMetricChart } from '../../common/workout-chart.js';
-import { ChartCanvas } from '../../components/ChartCanvas.jsx';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
+import { LineChart } from '../../components/charts/LineChart.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
+import { TextInput } from '../../components/inputs/TextInput.jsx';
+import { Select } from '../../components/inputs/Select.jsx';
 
 const METRICS = [
   { key: 'distanceKm', label: 'Distance' },
@@ -17,6 +20,24 @@ const METRICS = [
 ];
 const FILTERS = ['', 'Long run', 'Tempo', 'Sprints'];
 const DAYS_OPTIONS = [7, 30, 90];
+
+const METRIC_LABEL = {
+  distanceKm: 'Distance (km)',
+  paceMinPerKm: 'Pace (min/km)',
+  heartRate: 'Heart rate (bpm)',
+};
+
+const METRIC_COLOR = {
+  light: { distanceKm: '#2a78d6', paceMinPerKm: '#1baf7a', heartRate: '#d03b3b' },
+  dark: { distanceKm: '#3987e5', paceMinPerKm: '#199e70', heartRate: '#e66767' },
+};
+
+function formatMetricValue(metric, value) {
+  if (value === null || value === undefined) return '—';
+  if (metric === 'paceMinPerKm') return decimalMinutesToPaceLabel(value);
+  if (metric === 'heartRate') return `${Math.round(value)}`;
+  return value.toFixed(1);
+}
 
 function formatTotalTime(totalMinutes) {
   const totalSeconds = Math.round(totalMinutes * 60);
@@ -60,6 +81,11 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
   }
 
   const stats = runningSummaryStats(workouts, days, filter);
+  const isPace = metric === 'paceMinPerKm';
+  const metricPoints = runningActivityPoints(workouts, days, filter);
+  const metricValues = metricPoints.map((p) => (isPace ? paceToDecimalMinutes(p[metric]) : p[metric]));
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const metricColor = (isDarkMode ? METRIC_COLOR.dark : METRIC_COLOR.light)[metric];
 
   return (
     <div>
@@ -74,38 +100,64 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
           <form className="inline-form" onSubmit={handleSubmit}>
             <div className="form-field">
               <label htmlFor="workout-distance-input">Distance (km)</label>
-              <input id="workout-distance-input" type="number" step="0.01" min="0" inputMode="decimal" required
-                value={form.distanceKm} onChange={(e) => setForm((f) => ({ ...f, distanceKm: e.target.value }))} />
+              <NumberInput
+                  id="workout-distance-input"
+                  placeholder="km"
+                  step="0.01"
+                  min="0"
+                  required
+                  value={form.distanceKm}
+                  onChange={(value) => setForm((f) => ({ ...f, distanceKm: value }))}
+              />
             </div>
             <div className="form-field">
               <label htmlFor="workout-pace-input">Pace (min/km)</label>
-              <input id="workout-pace-input" type="number" step="0.01" min="0" inputMode="decimal"
-                value={form.paceMinPerKm} onChange={(e) => setForm((f) => ({ ...f, paceMinPerKm: e.target.value }))} />
+              <NumberInput
+                  id="workout-pace-input"
+                  placeholder="min/km"
+                  step="0.01"
+                  min="0"
+                  value={form.paceMinPerKm}
+                  onChange={(value) => setForm((f) => ({ ...f, paceMinPerKm: value }))}
+              />
             </div>
             <div className="form-field">
               <label htmlFor="workout-heartrate-input">Heart rate (bpm)</label>
-              <input id="workout-heartrate-input" type="number" step="1" min="0" inputMode="numeric"
-                value={form.heartRate} onChange={(e) => setForm((f) => ({ ...f, heartRate: e.target.value }))} />
+              <NumberInput
+                  id="workout-heartrate-input"
+                  step="1"
+                  min="0"
+                  value={form.heartRate}
+                  onChange={(value) => setForm((f) => ({ ...f, heartRate: value }))}
+              />
             </div>
             <div className="form-field">
               <label htmlFor="workout-running-type-input">Run type</label>
-              <select id="workout-running-type-input" className="select-list"
-                value={form.runningType} onChange={(e) => setForm((f) => ({ ...f, runningType: e.target.value }))}>
-                <option value="">Optional</option>
-                <option value="Long run">Long run</option>
-                <option value="Tempo">Tempo</option>
-                <option value="Sprints">Sprints</option>
-              </select>
+              <Select
+                  id="workout-running-type-input"
+                  placeholder="Optional"
+                  options={['Long run', 'Tempo', 'Sprints']}
+                  value={form.runningType}
+                  onChange={(value) => setForm((f) => ({ ...f, runningType: value }))}
+              />
             </div>
             <div className="form-field">
               <label htmlFor="workout-note-input">Note</label>
-              <input id="workout-note-input" type="text"
-                value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+              <TextInput
+                  id="workout-note-input"
+                  value={form.note}
+                  onChange={(value) => setForm((f) => ({ ...f, note: value }))}
+              />
             </div>
             <div className="form-field">
               <label htmlFor="workout-calories-input">Calories</label>
-              <input id="workout-calories-input" type="number" step="1" min="0" inputMode="numeric"
-                value={form.calories} onChange={(e) => setForm((f) => ({ ...f, calories: e.target.value }))} />
+              <NumberInput
+                  id="workout-calories-input"
+                  step="1"
+                  min="0"
+                  value={form.calories}
+                  onChange={(value) => setForm((f) => ({ ...f, calories: value }))}
+              />
             </div>
             <div className="form-field button-field">
               <Button type="submit">Save</Button>
@@ -177,10 +229,13 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
             ))}
           </div>
 
-          <div className="chart-wrap" style={{ marginTop: '20px' }}>
-            <ChartCanvas
-              draw={(canvas) => renderRunningMetricChart(canvas, workouts, { metric, runningType: filter, days })}
-              deps={[workouts, metric, filter, days]}
+          <div style={{ marginTop: '20px' }}>
+            <LineChart
+              labels={metricPoints.map((p) => p.x.slice(5))}
+              values={metricValues}
+              color={metricColor}
+              datasetLabel={METRIC_LABEL[metric]}
+              formatAverageLabel={(avg) => `Average (${formatMetricValue(metric, avg)})`}
             />
           </div>
         </section>

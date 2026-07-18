@@ -24,7 +24,7 @@ export function Button({
   const classes = [
     'app-button',
     `app-button-${variant}`,
-    size === 'small' && 'app-button-small',
+    size === 'small',
     className,
   ]
       .filter(Boolean)

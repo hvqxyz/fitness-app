@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { saveActivitySettings, deleteActivityHistoryEntry, latestActivityHistory, computeBmr, startOfWeek, todayKey } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
+import { FoodList } from '../../components/lists/FoodList.jsx';
 
 const KCAL_PER_KG = 7000;
 
@@ -74,8 +76,7 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
       <section className="card" style={{ marginTop: '10px' }}>
         <h2>Activity Factor</h2>
         <form className="ingredient-form" onSubmit={handleSubmit}>
-          <input
-            type="number"
+          <NumberInput
             placeholder="Activity multiplier"
             step="0.05"
             min="1"
@@ -83,7 +84,7 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
             inputMode="decimal"
             required
             value={multiplier}
-            onChange={(e) => setMultiplier(e.target.value)}
+            onChange={setMultiplier}
           />
           <p className="ingredient-sub">Maintenance = BMR × activity multiplier. Goal adjustment uses 1 kg ≈ 7,000 kcal.</p>
 
@@ -92,30 +93,29 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
             <button type="button" className="button range-btn" aria-pressed={goalType === 'Lose'} onClick={() => setGoalType('Lose')}>Lose weight</button>
             <button type="button" className="button range-btn" aria-pressed={goalType === 'Gain'} onClick={() => setGoalType('Gain')}>Gain weight</button>
           </div>
-          <input
-            type="number"
+          <NumberInput
             placeholder="kg per week"
             step="0.05"
             min="0"
             inputMode="decimal"
             required
             value={goalRate}
-            onChange={(e) => setGoalRate(e.target.value)}
+            onChange={setGoalRate}
           />
           <Button type="submit">Save activity</Button>
         </form>
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
 
         <h3>Weekly history</h3>
-        <ul className="food-list">
-          {[...activityHistory].reverse().map((entry) => (
-            <li key={entry.date}>
-              <span className="food-name">Week of {entry.date}</span>
-              <span>×{entry.activityMultiplier} · {entry.goalType === 'Gain' ? 'Gain' : 'Lose'} {entry.rateKgPerWeek} kg/week</span>
-              <Button aria-label={`Remove activity entry from ${entry.date}`} onClick={() => handleDelete(entry)}>×</Button>
-            </li>
-          ))}
-        </ul>
+        <FoodList
+          items={[...activityHistory].reverse().map((entry) => ({
+            key: entry.date,
+            label: `Week of ${entry.date}`,
+            value: `×${entry.activityMultiplier} · ${entry.goalType === 'Gain' ? 'Gain' : 'Lose'} ${entry.rateKgPerWeek} kg/week`,
+            removeLabel: `Remove activity entry from ${entry.date}`,
+            onRemove: () => handleDelete(entry),
+          }))}
+        />
       </section>
 
       <section className="stat-grid" style={{ marginTop: '10px' }}>

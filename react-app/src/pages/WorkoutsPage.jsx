@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getWorkouts, getGymExercises, loadData, getSelectedDate, setSelectedDate, getSpreadsheetUrl, SHEET_NAMES } from '../common/storage.js';
-import { renderWorkoutCaloriesChart } from '../common/workout-chart.js';
-import { DateCarousel } from '../components/DateCarousel.jsx';
-import { ChartCanvas } from '../components/ChartCanvas.jsx';
-import { WorkoutList } from '../components/WorkoutList.jsx';
+import { getWorkouts, getGymExercises, loadData, getSelectedDate, setSelectedDate, getSpreadsheetUrl, SHEET_NAMES, workoutCaloriesByTypePoints, deleteWorkout, deleteWorkouts } from '../common/storage.js';
+import { workoutListItems } from '../common/workout-list.js';
+import { DateCarousel } from '../components/nav/DateCarousel.jsx';
+import { StackedBarChart } from '../components/charts/StackedBarChart.jsx';
+import { FoodList } from '../components/lists/FoodList.jsx';
 import { Button } from '../components/buttons/Button.jsx';
 import { RunningSection } from './workouts/RunningSection.jsx';
 import { GymSection } from './workouts/GymSection.jsx';
 import { OtherSection } from './workouts/OtherSection.jsx';
 
 const TYPES = ['Running', 'Gym', 'Other'];
+
+const TYPE_COLORS = {
+  light: { Running: '#2a78d6', Gym: '#1baf7a', Other: '#898781' },
+  dark: { Running: '#3987e5', Gym: '#199e70', Other: '#c3c2b7' },
+};
 
 export function WorkoutsPage() {
   const [selectedDate, setSelectedDateState] = useState(getSelectedDate());
@@ -44,6 +49,21 @@ export function WorkoutsPage() {
     setSyncMessage({ text: `Couldn't save to Google Sheets: ${err.message}`, type: 'error' });
   }, []);
 
+  async function handleDeleteWorkout(rows) {
+    try {
+      if (rows.length > 1) await deleteWorkouts(rows);
+      else await deleteWorkout(rows[0]);
+      await refresh();
+    } catch (err) {
+      reportError(err);
+    }
+  }
+
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const typeColors = isDarkMode ? TYPE_COLORS.dark : TYPE_COLORS.light;
+  const { dates: caloriesDates, byType: caloriesByType } = workoutCaloriesByTypePoints(workouts, 14);
+  const caloriesSeries = TYPES.map((type) => ({ label: type, data: caloriesByType[type], color: typeColors[type] }));
+
   function handleDateChange(key) {
     setSelectedDate(key);
     setSelectedDateState(key);
@@ -67,13 +87,17 @@ export function WorkoutsPage() {
 
       <section className="card">
         <h2>Calories by activity</h2>
-        <div className="chart-wrap">
-          {loading ? (
+        {loading ? (
+          <div className="chart-wrap">
             <p className="chart-loading">Loading…</p>
-          ) : (
-            <ChartCanvas draw={(canvas) => renderWorkoutCaloriesChart(canvas, workouts)} deps={[workouts]} />
-          )}
-        </div>
+          </div>
+        ) : (
+          <StackedBarChart
+            labels={caloriesDates.map((d) => d.slice(5))}
+            series={caloriesSeries}
+            yAxisLabel="kcal"
+          />
+        )}
       </section>
 
       <div className="range-toggle" style={{ paddingTop: '10px', paddingBottom: '10px' }}>
@@ -86,7 +110,7 @@ export function WorkoutsPage() {
 
       <section className="card">
         <h2>Activities</h2>
-        <WorkoutList workouts={workouts} selectedDate={selectedDate} onChange={refresh} onError={reportError} />
+        <FoodList items={workoutListItems(workouts, selectedDate, { onDelete: handleDeleteWorkout })} />
       </section>
 
       {activeType === 'Running' && (

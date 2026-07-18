@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { addExercise, deleteExercise, addGymExercise, deleteGymExercise, GYM_TEMPLATES } from '../../common/storage.js';
 import { SearchInput } from '../../components/inputs/SearchInput.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import { FoodList } from '../../components/lists/FoodList.jsx';
 
 export function GymTemplatesSection({ exerciseCatalog, gymExercises, onExerciseCatalogChanged, onGymExercisesChanged }) {
   const [exerciseName, setExerciseName] = useState('');
@@ -90,14 +92,14 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, onExerciseC
           />
           <Button type="submit">Add exercise</Button>
         </form>
-        <ul className="food-list">
-          {exerciseCatalog.map((ex) => (
-            <li key={ex.name}>
-              <span className="food-name">{ex.name}</span>
-              <Button aria-label={`Remove ${ex.name}`} onClick={() => handleDeleteExercise(ex)}>×</Button>
-            </li>
-          ))}
-        </ul>
+        <FoodList
+          items={exerciseCatalog.map((ex) => ({
+            key: ex.name,
+            label: ex.name,
+            removeLabel: `Remove ${ex.name}`,
+            onRemove: () => handleDeleteExercise(ex),
+          }))}
+        />
         {exerciseMessage.text && <p className={`message ${exerciseMessage.type}`.trim()} role="status">{exerciseMessage.text}</p>}
       </section>
 
@@ -123,21 +125,19 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, onExerciseC
             placeholder="Choose exercise"
             required
           />
-          <input type="number" placeholder="Target reps" step="1" min="0" inputMode="numeric"
-            value={targetReps} onChange={(e) => setTargetReps(e.target.value)} />
-          <input type="number" placeholder="Target sets" step="1" min="0" inputMode="numeric"
-            value={targetSets} onChange={(e) => setTargetSets(e.target.value)} />
+          <NumberInput placeholder="Target reps" step="1" min="0" value={targetReps} onChange={setTargetReps} />
+          <NumberInput placeholder="Target sets" step="1" min="0" value={targetSets} onChange={setTargetSets} />
           <Button type="submit">Add exercise</Button>
         </form>
-        <ul className="food-list">
-          {templateExercises.map((ex) => (
-            <li key={ex.exercise}>
-              <span className="food-name">{ex.exercise}</span>
-              <span>{ex.targetReps} target reps × {ex.targetSets} target sets</span>
-              <Button aria-label={`Remove ${ex.exercise}`} onClick={() => handleDeleteGymExercise(ex)}>×</Button>
-            </li>
-          ))}
-        </ul>
+        <FoodList
+          items={templateExercises.map((ex) => ({
+            key: ex.exercise,
+            label: ex.exercise,
+            value: `${ex.targetReps} target reps × ${ex.targetSets} target sets`,
+            removeLabel: `Remove ${ex.exercise}`,
+            onRemove: () => handleDeleteGymExercise(ex),
+          }))}
+        />
         {gymExerciseMessage.text && <p className={`message ${gymExerciseMessage.type}`.trim()} role="status">{gymExerciseMessage.text}</p>}
       </section>
     </div>

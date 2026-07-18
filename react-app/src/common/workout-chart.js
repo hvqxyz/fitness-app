@@ -28,53 +28,10 @@ const SET_COLORS = {
   dark: ['#3987e5', '#199e70', '#e66767', '#e0a53a', '#9576ea', '#39b9cc'],
 };
 
-const chartInstances = new WeakMap();
 const runningChartInstances = new WeakMap();
 const gymExerciseChartInstances = new WeakMap();
 const gymKilosTrendChartInstances = new WeakMap();
 
-/**
- * Renders (or re-renders) a stacked bar chart of daily workout calories,
- * split by activity type (Running/Gym/Other), onto `canvas`.
- */
-export function renderWorkoutCaloriesChart(canvas, workouts, days = 14) {
-  const { dates, byType } = workoutCaloriesByTypePoints(workouts, days);
-
-  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const colors = isDarkMode ? TYPE_COLORS.dark : TYPE_COLORS.light;
-
-  const existing = chartInstances.get(canvas);
-  if (existing) {
-    existing.destroy();
-    chartInstances.delete(canvas);
-  }
-
-  const chart = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: dates.map((d) => d.slice(5)),
-      datasets: ['Running', 'Gym', 'Other'].map((type) => ({
-        label: type,
-        data: byType[type],
-        backgroundColor: colors[type],
-      })),
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 2.5,
-      scales: {
-        x: { stacked: true },
-        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'kcal' } },
-      },
-      plugins: {
-        legend: { position: 'bottom' },
-      },
-    },
-  });
-
-  chartInstances.set(canvas, chart);
-}
 
 function formatMetricValue(metric, value, isPace) {
   if (value === null || value === undefined) return '—';

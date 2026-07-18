@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { saveProfile } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { ActivityFactorView } from './ActivityFactorView.jsx';
 import { TargetsOnlyView } from './TargetsOnlyView.jsx';
 
@@ -36,13 +37,13 @@ export function TargetsSection({ profile, prevWeekAvgWeight, targetsHistory, act
         <form className="inline-form" onSubmit={handleSubmit}>
           <div className="form-field">
             <label htmlFor="profile-age-input">Age</label>
-            <input id="profile-age-input" type="number" step="1" min="1" max="120" placeholder="Age" inputMode="numeric"
-              value={age} onChange={(e) => setAge(e.target.value)} />
+            <NumberInput id="profile-age-input" step="1" min="1" max="120" placeholder="Age"
+              value={age} onChange={setAge} />
           </div>
           <div className="form-field">
             <label htmlFor="profile-height-input">Height (cm)</label>
-            <input id="profile-height-input" type="number" step="0.1" min="50" max="272" placeholder="Height (cm)" inputMode="decimal"
-              value={heightCm} onChange={(e) => setHeightCm(e.target.value)} />
+            <NumberInput id="profile-height-input" step="0.1" min="50" max="272" placeholder="Height (cm)" inputMode="decimal"
+              value={heightCm} onChange={setHeightCm} />
           </div>
           <Button type="submit">Save profile</Button>
         </form>

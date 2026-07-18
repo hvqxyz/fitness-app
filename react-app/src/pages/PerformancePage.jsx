@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Chart from 'chart.js/auto';
+import { useCallback, useEffect, useState } from 'react';
 import {
   getSelectedWeek,
   setSelectedWeek,
@@ -17,7 +16,8 @@ import {
   historyEntryForDate,
   bmiCategory,
 } from '../common/storage.js';
-import { WeekCarousel } from '../components/WeekCarousel.jsx';
+import { WeekCarousel } from '../components/nav/WeekCarousel.jsx';
+import { LineChart } from '../components/charts/LineChart.jsx';
 
 function formatWeekStartLabel(key) {
   const d = new Date(key + 'T00:00:00');
@@ -65,9 +65,6 @@ export function PerformancePage() {
   const [activityHistory, setActivityHistory] = useState([]);
   const [calorieDemandMethod, setCalorieDemandMethod] = useState('multiplier');
 
-  const chartCanvasRef = useRef(null);
-  const chartRef = useRef(null);
-
   const refresh = useCallback(async () => {
     const [d, p, w, th, ah] = await Promise.all([
       loadData(), getProfile(), getWorkouts(), getTargetsHistory(), getActivityHistory(),
@@ -85,53 +82,7 @@ export function PerformancePage() {
 
   const stats = data ? weeklyPerformanceStats(data.entries, selectedWeek, profile.heightCm) : null;
   const weightPoints = data ? weeklyAvgWeightPoints(data.entries, selectedWeek, 4) : [];
-
-  useEffect(() => {
-    if (!data || !chartCanvasRef.current) return;
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const color = isDarkMode ? '#3987e5' : '#2a78d6';
-
-    const values = weightPoints.map((p) => p.avgWeight);
-    const valid = values.filter((v) => v !== null && v !== undefined);
-    const average = valid.length ? valid.reduce((sum, v) => sum + v, 0) / valid.length : null;
-
-    const datasets = [{
-      label: 'Avg weight (kg)',
-      data: values,
-      borderColor: color,
-      backgroundColor: color,
-      pointRadius: 3,
-      spanGaps: true,
-    }];
-    if (average !== null) {
-      datasets.push({
-        label: `Average (${average.toFixed(1)} kg)`,
-        data: weightPoints.map(() => average),
-        borderColor: '#898781',
-        borderDash: [6, 4],
-        borderWidth: 1.5,
-        pointRadius: 0,
-        fill: false,
-      });
-    }
-
-    chartRef.current?.destroy();
-    chartRef.current = new Chart(chartCanvasRef.current, {
-      type: 'line',
-      data: { labels: weightPoints.map((p) => formatWeekStartLabel(p.x)), datasets },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: false, title: { display: true, text: 'kg' } } },
-        plugins: { legend: { display: true, position: 'bottom' } },
-      },
-    });
-
-    return () => {
-      chartRef.current?.destroy();
-      chartRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, selectedWeek]);
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   function handleWeekChange(key) {
     setSelectedWeek(key);
@@ -158,7 +109,7 @@ export function PerformancePage() {
 
   return (
     <>
-      <WeekCarousel initialWeek={selectedWeek} onChange={handleWeekChange} />
+      <WeekCarousel selectedWeek={selectedWeek} onChange={handleWeekChange} />
 
       <section className="stat-grid">
         <div className="stat-tile">
@@ -182,7 +133,13 @@ export function PerformancePage() {
 
       <section className="card">
         <h2>Weekly Weight Trend</h2>
-        <canvas ref={chartCanvasRef}></canvas>
+        <LineChart
+          labels={weightPoints.map((p) => formatWeekStartLabel(p.x))}
+          values={weightPoints.map((p) => p.avgWeight)}
+          color={isDarkMode ? '#3987e5' : '#2a78d6'}
+          datasetLabel="Avg weight (kg)"
+          formatAverageLabel={(avg) => `Average (${avg.toFixed(1)} kg)`}
+        />
       </section>
 
       <section>

@@ -1,36 +1,27 @@
-import { deleteWorkout, deleteWorkouts } from './storage.js';
-
-function formatOtherWorkout(w) {
-  const parts = ['Other', w.note || 'Workout'];
-  if (w.calories !== undefined) parts.push(`${w.calories} kcal`);
-  return parts.join(' · ');
+function formatOtherLabel(w) {
+  return `Other · ${w.note || 'Workout'}`;
 }
 
-function formatRunningHeader(w) {
-  const parts = ['Running', `${w.distanceKm} km`];
+function formatRunningLabel(w) {
+  const parts = [`Running · ${w.distanceKm} km`];
   if (w.paceMinPerKm !== undefined) parts.push(`${w.paceMinPerKm.toFixed(2)} min/km`);
   if (w.heartRate !== undefined) parts.push(`${w.heartRate} bpm`);
   if (w.runningType) parts.push(w.runningType);
-  if (w.calories !== undefined) parts.push(`${w.calories} kcal`);
   return parts.join(' · ');
 }
 
-function formatGymGroupHeader(template, sessionEntry) {
-  const parts = ['Gym', template || 'Gym session'];
-  if (sessionEntry?.calories !== undefined) parts.push(`${sessionEntry.calories} kcal`);
-  return parts.join(' · ');
+function formatGymGroupLabel(template) {
+  return `Gym · ${template || 'Gym session'}`;
 }
 
 function formatGymExerciseDetail(w) {
   const parts = [w.exercise];
   if (Array.isArray(w.setKilos) && w.setKilos.length) {
-    w.setKilos.forEach((kg, index) => {
-      const setParts = [` - Set ${index + 1}:`];
-      if (w.reps !== undefined) setParts.push(`${w.reps} reps ×`);
-      setParts.push(`${kg} kg`);
-      parts.push(setParts.join(' '));
-    });
-    return parts.join('\n');
+    const setsText = w.setKilos
+      .map((kg, index) => `- Set ${index + 1}: ${w.reps !== undefined ? `${w.reps} reps × ` : ''}${kg} kg`)
+      .join(' \n ');
+    parts.push(setsText);
+    return parts.join(' \n ');
   }
   const setReps = [];
   if (w.sets !== undefined) setReps.push(`${w.sets} sets`);
@@ -40,78 +31,20 @@ function formatGymExerciseDetail(w) {
   return parts.join(' · ');
 }
 
+function formatCalories(calories) {
+  return calories !== undefined ? `${calories} kcal` : '—';
+}
+
 /**
- * Renders every workout logged on `selectedDate` (across Running/Gym/Other)
- * into `listEl`. Gym entries for the same template are bundled into a single
- * grouped row with the individual exercises listed underneath.
- * `onChange` re-renders the calling page after a successful delete;
- * `onError` reports delete failures back to the page's own message UI.
+ * Builds FoodList-ready items for every workout logged on `selectedDate`
+ * (across Running/Gym/Other). Gym entries for the same template are bundled
+ * into a single row; per-exercise breakdown goes in `details`, which
+ * FoodList reveals when the row is clicked.
+ * `onDelete(rows)` is called with the sheet row(s) to remove when the row's
+ * remove button is pressed.
  */
-export function renderWorkoutList(listEl, workouts, selectedDate, { onChange, onError } = {}) {
+export function workoutListItems(workouts, selectedDate, { onDelete } = {}) {
   const forDay = workouts.filter((w) => w.date === selectedDate);
-  listEl.innerHTML = '';
-
-  function appendSimpleEntry(text, row) {
-    const li = document.createElement('li');
-    const label = document.createElement('span');
-    label.className = 'food-name';
-    label.textContent = text;
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'button';
-    delBtn.textContent = '×';
-    delBtn.setAttribute('aria-label', 'Remove workout');
-    delBtn.addEventListener('click', async () => {
-      try {
-        await deleteWorkout(row);
-        if (onChange) await onChange();
-      } catch (err) {
-        if (onError) onError(err);
-      }
-    });
-    li.append(label, delBtn);
-    listEl.appendChild(li);
-  }
-
-  function appendGroupEntry(headerText, subItems, rows) {
-    const li = document.createElement('li');
-    li.className = 'workout-group-item';
-
-    const header = document.createElement('div');
-    header.className = 'workout-group-header';
-    const label = document.createElement('span');
-    label.className = 'food-name';
-    label.textContent = headerText;
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'button';
-    delBtn.textContent = '×';
-    delBtn.setAttribute('aria-label', 'Remove workout');
-    delBtn.addEventListener('click', async () => {
-      try {
-        await deleteWorkouts(rows);
-        if (onChange) await onChange();
-      } catch (err) {
-        if (onError) onError(err);
-      }
-    });
-    header.append(label, delBtn);
-    li.appendChild(header);
-
-    if (subItems.length) {
-      const subList = document.createElement('ul');
-      subList.className = 'workout-sub-list';
-      console.log(subList);
-      subItems.forEach((text) => {
-        const subLi = document.createElement('li');
-        subLi.textContent = text;
-        subList.appendChild(subLi);
-      });
-      li.appendChild(subList);
-    }
-
-    listEl.appendChild(li);
-  }
 
   const gymGroups = new Map();
   const runningEntries = [];
@@ -128,17 +61,44 @@ export function renderWorkoutList(listEl, workouts, selectedDate, { onChange, on
     }
   });
 
+  const items = [];
+
   gymGroups.forEach((entries, template) => {
     const exercises = entries.filter((w) => w.exercise);
     const sessionEntry = entries.find((w) => !w.exercise);
-    appendGroupEntry(
-      formatGymGroupHeader(template, sessionEntry),
-      exercises.map((w) => formatGymExerciseDetail(w)),
-      entries.map((w) => w._row),
-    );
+    const rows = entries.map((w) => w._row);
+    items.push({
+      key: `gym-${template}-${rows[0]}`,
+      label: formatGymGroupLabel(template),
+      value: formatCalories(sessionEntry?.calories),
+      details: exercises.length
+          ? exercises.map((w) => formatGymExerciseDetail(w)).join('\n')
+          : undefined,
+      removeLabel: 'Remove workout',
+      onRemove: () => onDelete?.(rows),
+    });
   });
+
   runningEntries.forEach((workout) => {
-    appendGroupEntry(formatRunningHeader(workout), workout.note ? [workout.note] : [], [workout._row]);
+    items.push({
+      key: `running-${workout._row}`,
+      label: formatRunningLabel(workout),
+      value: formatCalories(workout.calories),
+      details: workout.note || undefined,
+      removeLabel: 'Remove workout',
+      onRemove: () => onDelete?.([workout._row]),
+    });
   });
-  otherEntries.forEach((workout) => appendSimpleEntry(formatOtherWorkout(workout), workout._row));
+
+  otherEntries.forEach((workout) => {
+    items.push({
+      key: `other-${workout._row}`,
+      label: formatOtherLabel(workout),
+      value: formatCalories(workout.calories),
+      removeLabel: 'Remove workout',
+      onRemove: () => onDelete?.([workout._row]),
+    });
+  });
+
+  return items;
 }

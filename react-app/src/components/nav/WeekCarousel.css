@@ -1,0 +1,137 @@
+.week-carousel {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.week-strip {
+    flex: 1;
+
+    display: flex;
+    gap: .55rem;
+
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    scroll-behavior: smooth;
+}
+
+.week-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.week-pill {
+    flex-shrink: 0;
+
+    height: 42px;
+    min-width: 118px;
+
+    padding: 0 1.1rem;
+
+    border: 1px solid var(--gridline);
+    border-radius: 999px;
+
+    background: transparent;
+
+    color: var(--text-secondary);
+
+    font-size: .92rem;
+    font-weight: 500;
+
+    transition: .18s;
+}
+
+.week-pill:hover {
+    background: rgba(255,255,255,.04);
+    color: var(--text);
+}
+
+.week-pill.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+
+    box-shadow: 0 8px 18px rgba(59,130,246,.25);
+}
+
+.week-pill.today:not(.selected) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.week-nav,
+.week-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: 1px solid var(--gridline);
+    border-radius: 50%;
+
+    background: transparent;
+    color: var(--text-secondary);
+
+    transition: .18s;
+}
+
+.week-nav:hover,
+.week-icon:hover {
+    background: rgba(255,255,255,.04);
+    color: var(--text);
+}
+
+.week-icon {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.week-icon input {
+    position: absolute;
+    inset: 0;
+
+    opacity: 0;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+
+    .week-carousel {
+        gap: .30rem;
+    }
+
+    .week-nav,
+    .week-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+
+    .week-pill {
+        min-width: 88px;
+        height: 36px;
+
+        padding: 0 .85rem;
+
+        font-size: .80rem;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .week-icon {
+        display: none;
+    }
+
+    .week-pill {
+        min-width: 88px;
+        font-size: .78rem;
+    }
+
+    .week-carousel {
+        gap: .25rem;
+    }
+}

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Chart from 'chart.js/auto';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   loadData,
   dayTotal,
@@ -22,10 +21,11 @@ import {
   MEAL_TYPES,
   DEFAULT_MEAL,
 } from '../common/storage.js';
-import { DateCarousel } from '../components/DateCarousel.jsx';
-import { WeekCarousel } from '../components/WeekCarousel.jsx';
+import { DateCarousel } from '../components/nav/DateCarousel.jsx';
+import { WeekCarousel } from '../components/nav/WeekCarousel.jsx';
 import { ProgressBar } from '../components/charts/ProgressBar.jsx';
 import { MacroRingItem } from '../components/charts/MacroRingItem.jsx';
+import { LineChart } from '../components/charts/LineChart.jsx';
 import { MealSection } from './calories/MealSection.jsx';
 import { CopyMealModal } from './calories/CopyMealModal.jsx';
 
@@ -68,9 +68,6 @@ export function CaloriesPage() {
   const [copyModal, setCopyModal] = useState({
     open: false, sourceMeal: null, date: '', mealType: '', message: { text: '', type: '' }, submitting: false,
   });
-
-  const chartCanvasRef = useRef(null);
-  const chartRef = useRef(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -116,50 +113,8 @@ export function CaloriesPage() {
 
   const weekStats = entries ? weeklyMacroStats(entries, selectedWeek, targetsForDate(selectedWeek, targetsHistory, profile)) : null;
 
-  // Analytics line chart — only drawn while that tab is visible.
-  useEffect(() => {
-    if (view !== 'Analytics' || !entries || !chartCanvasRef.current) return;
-    const points = caloriesOverTimePoints({ entries }).slice(-chartRangeDays);
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const kcalColor = isDarkMode ? '#199e70' : '#1baf7a';
-    const values = points.map((p) => p.y);
-    const logged = values.filter((v) => v !== null && v !== undefined);
-    const average = logged.length > 0 ? logged.reduce((sum, v) => sum + v, 0) / logged.length : null;
-
-    chartRef.current?.destroy();
-    chartRef.current = new Chart(chartCanvasRef.current, {
-      type: 'line',
-      data: {
-        labels: points.map((p) => p.x),
-        datasets: [
-          {
-            label: 'Calories (kcal)',
-            data: values,
-            borderColor: kcalColor,
-            backgroundColor: kcalColor,
-            pointBackgroundColor: kcalColor,
-            pointRadius: 3,
-            spanGaps: true,
-          },
-          {
-            label: average !== null ? `Average (${Math.round(average)} kcal)` : 'Average',
-            data: points.map(() => average),
-            borderColor: '#898781',
-            borderDash: [6, 4],
-            borderWidth: 1.5,
-            pointRadius: 0,
-            fill: false,
-          },
-        ],
-      },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } } },
-    });
-
-    return () => {
-      chartRef.current?.destroy();
-      chartRef.current = null;
-    };
-  }, [view, entries, chartRangeDays]);
+  const caloriesPoints = entries ? caloriesOverTimePoints({ entries }).slice(-chartRangeDays) : [];
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   function handleDateChange(key) {
     setSelectedDate(key);
@@ -235,9 +190,18 @@ export function CaloriesPage() {
 
       {view === 'Tracker' && (
         <div className="calorie-progress-tile">
-          <section className="card">
+          <section className="card card-chart">
             {loading ? (
-              <p className="tile-loading" role="status">Loading…</p>
+              // Same shape as the loaded state below (ProgressBar + 3 rings) so this
+              // card doesn't resize once real data arrives — only the values change.
+              <>
+                <ProgressBar value={0} max={1} variant="compact" title="Calories" label="—" />
+                <div className="macro-rings">
+                  {MACRO_RING_CONFIGS.map((cfg) => (
+                    <MacroRingItem key={cfg.key} value={0} max={1} label="—" sublabel="—" title={cfg.label} />
+                  ))}
+                </div>
+              </>
             ) : (
               <>
                 {targets.targetKcal ? (
@@ -346,26 +310,34 @@ export function CaloriesPage() {
                 </button>
               ))}
             </div>
-            <div className="chart-wrap calories-chart-wrap">
-              <canvas ref={chartCanvasRef}></canvas>
-            </div>
+            <LineChart
+              labels={caloriesPoints.map((p) => p.x)}
+              values={caloriesPoints.map((p) => p.y)}
+              color={isDarkMode ? '#199e70' : '#1baf7a'}
+              datasetLabel="Calories (kcal)"
+              formatAverageLabel={(avg) => `Average (${Math.round(avg)} kcal)`}
+              className="calories-chart-wrap"
+            />
           </section>
 
           <section className="card" style={{ marginTop: '10px' }}>
-            <h2>Analytics by weeks</h2>
-            <WeekCarousel initialWeek={selectedWeek} onChange={handleWeekChange} />
+            <h2>Analytics by week</h2>
+            <WeekCarousel selectedWeek={selectedWeek} onChange={handleWeekChange} />
 
             {weekStats && WEEK_MACRO_CONFIGS.map((cfg) => {
               const { actual, target, avgActual, avgTarget } = weekStats[cfg.key];
-              if (target === null) return null;
-              const percent = Math.round((actual / target) * 100);
+              const percent = target ? Math.round((actual / target) * 100) : 0;
+              const label = target !== null
+                ? `${Math.round(actual)} of ${Math.round(target)} ${cfg.unit} (${percent}%) — avg ${Math.round(avgActual)} of ${Math.round(avgTarget)} ${cfg.unit}/day`
+                : `${Math.round(actual)} ${cfg.unit} — no target set`;
               return (
                 <div className="week-macro-item" key={cfg.key}>
-                  <p className="total-line">{cfg.label}</p>
                   <ProgressBar
+                    title={cfg.label}
                     value={actual}
-                    max={target}
-                    label={`${Math.round(actual)} of ${Math.round(target)} ${cfg.unit} (${percent}%) — avg ${Math.round(avgActual)} of ${Math.round(avgTarget)} ${cfg.unit}/day`}
+                    max={target ?? 0}
+                    variant="compact"
+                    label={label}
                   />
                 </div>
               );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { addIngredient, deleteIngredient, getSpreadsheetUrl, SHEET_NAMES } from '../../common/storage.js';
 import { SearchInput } from '../../components/inputs/SearchInput.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
 import { IngredientModal } from './IngredientModal.jsx';
 
@@ -107,33 +108,33 @@ export function FoodDatabaseSection({ ingredients, onSaved }) {
           <div className="ingredient-grid">
             <div className="form-field">
               <label htmlFor="ingredient-kcal-input">Kcal /100g</label>
-              <input id="ingredient-kcal-input" type="number" placeholder="Kcal /100g" step="0.1" min="0" required
-                value={form.kcal} onChange={(e) => setForm((f) => ({ ...f, kcal: e.target.value }))} />
+              <NumberInput id="ingredient-kcal-input" placeholder="Kcal /100g" step="0.1" min="0" required
+                value={form.kcal} onChange={(value) => setForm((f) => ({ ...f, kcal: value }))} />
             </div>
             <div className="form-field">
               <label htmlFor="ingredient-fiber-input">Fiber /100g</label>
-              <input id="ingredient-fiber-input" type="number" placeholder="Fiber /100g" step="0.1" min="0"
-                value={form.fiber} onChange={(e) => setForm((f) => ({ ...f, fiber: e.target.value }))} />
+              <NumberInput id="ingredient-fiber-input" placeholder="Fiber /100g" step="0.1" min="0"
+                value={form.fiber} onChange={(value) => setForm((f) => ({ ...f, fiber: value }))} />
             </div>
             <div className="form-field">
               <label htmlFor="ingredient-carbs-input">Carbs /100g</label>
-              <input id="ingredient-carbs-input" type="number" placeholder="Carbs /100g" step="0.1" min="0"
-                value={form.carbs} onChange={(e) => setForm((f) => ({ ...f, carbs: e.target.value }))} />
+              <NumberInput id="ingredient-carbs-input" placeholder="Carbs /100g" step="0.1" min="0"
+                value={form.carbs} onChange={(value) => setForm((f) => ({ ...f, carbs: value }))} />
             </div>
             <div className="form-field">
               <label htmlFor="ingredient-satfat-input">Sat fat /100g</label>
-              <input id="ingredient-satfat-input" type="number" placeholder="Sat fat /100g" step="0.1" min="0"
-                value={form.satFat} onChange={(e) => setForm((f) => ({ ...f, satFat: e.target.value }))} />
+              <NumberInput id="ingredient-satfat-input" placeholder="Sat fat /100g" step="0.1" min="0"
+                value={form.satFat} onChange={(value) => setForm((f) => ({ ...f, satFat: value }))} />
             </div>
             <div className="form-field">
               <label htmlFor="ingredient-unsatfat-input">Unsat fat /100g</label>
-              <input id="ingredient-unsatfat-input" type="number" placeholder="Unsat fat /100g" step="0.1" min="0"
-                value={form.unsatFat} onChange={(e) => setForm((f) => ({ ...f, unsatFat: e.target.value }))} />
+              <NumberInput id="ingredient-unsatfat-input" placeholder="Unsat fat /100g" step="0.1" min="0"
+                value={form.unsatFat} onChange={(value) => setForm((f) => ({ ...f, unsatFat: value }))} />
             </div>
             <div className="form-field">
               <label htmlFor="ingredient-protein-input">Protein /100g</label>
-              <input id="ingredient-protein-input" type="number" placeholder="Protein /100g" step="0.1" min="0"
-                value={form.protein} onChange={(e) => setForm((f) => ({ ...f, protein: e.target.value }))} />
+              <NumberInput id="ingredient-protein-input" placeholder="Protein /100g" step="0.1" min="0"
+                value={form.protein} onChange={(value) => setForm((f) => ({ ...f, protein: value }))} />
             </div>
           </div>
           <Button type="submit" disabled={Boolean(duplicateName)}>Add food</Button>

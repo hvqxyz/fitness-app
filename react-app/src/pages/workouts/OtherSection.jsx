@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { addWorkout } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { TextInput } from '../../components/inputs/TextInput.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 
 const EMPTY_FORM = { note: '', calories: '' };
 
@@ -31,26 +33,23 @@ export function OtherSection({ selectedDate, onSaved, onError }) {
       <form className="inline-form" onSubmit={handleSubmit}>
         <div className="form-field">
           <label htmlFor="other-note-input">Note</label>
-          <input
+          <TextInput
             id="other-note-input"
-            type="text"
             placeholder="Note"
             required
             value={form.note}
-            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+            onChange={(value) => setForm((f) => ({ ...f, note: value }))}
           />
         </div>
         <div className="form-field">
           <label htmlFor="other-calories-input">Calories</label>
-          <input
+          <NumberInput
             id="other-calories-input"
-            type="number"
             placeholder="Calories"
             step="1"
             min="0"
-            inputMode="numeric"
             value={form.calories}
-            onChange={(e) => setForm((f) => ({ ...f, calories: e.target.value }))}
+            onChange={(value) => setForm((f) => ({ ...f, calories: value }))}
           />
         </div>
         <div className="form-field button-field">
