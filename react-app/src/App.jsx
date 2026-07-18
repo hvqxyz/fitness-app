@@ -3,11 +3,12 @@ import { SignInGate } from './components/SignInGate.jsx';
 import { WeightPage } from './pages/WeightPage.jsx';
 import { CaloriesPage } from './pages/CaloriesPage.jsx';
 import { WorkoutsPage } from './pages/WorkoutsPage.jsx';
+import { MeasurementsPage } from './pages/MeasurementsPage.jsx';
 import { PerformancePage } from './pages/PerformancePage.jsx';
 import { ProfilePage } from './pages/ProfilePage.jsx';
 
 // Rendered as the main tab bar.
-const TABS = ['Weight', 'Calories', 'Workouts', 'Performance'];
+const TABS = ['Weight', 'Calories', 'Workouts', 'Measurements', 'Performance'];
 
 // Profile isn't a main tab — like the vanilla site, it's reached via the
 // header avatar icon instead.
@@ -15,6 +16,7 @@ const PAGES = {
   Weight: WeightPage,
   Calories: CaloriesPage,
   Workouts: WorkoutsPage,
+  Measurements: MeasurementsPage,
   Performance: PerformancePage,
   Profile: ProfilePage,
 };

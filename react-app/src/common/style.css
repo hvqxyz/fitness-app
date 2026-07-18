@@ -357,19 +357,6 @@ label {
   margin-bottom: 0.25rem;
 }
 
-/*input[type="number"],*/
-/*input[type="text"],*/
-select {
-  font-size: 1rem;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--gridline);
-  border-radius: 8px;
-  background: var(--page);
-  color: var(--text-primary);
-  min-height: 44px;
-  width: 100%;
-}
-
 .inline-form {
   display: flex;
   flex-wrap: wrap;
@@ -854,11 +841,7 @@ tfoot th {
   letter-spacing: 0.02em;
 }
 
-
-
 .meal-summary {
-  margin-top: 1rem;
-
   border: 1px solid var(--gridline);
   border-radius: 18px;
 

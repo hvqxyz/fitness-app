@@ -84,57 +84,58 @@ export function WorkoutsPage() {
   return (
     <>
       <DateCarousel selectedDate={selectedDate} onChange={handleDateChange} />
+      <div className="card-chart">
+        <section className="card">
+          <h2>Calories by activity</h2>
+          {loading ? (
+              <div className="chart-wrap">
+                <p className="chart-loading">Loading…</p>
+              </div>
+          ) : (
+              <StackedBarChart
+                  labels={caloriesDates.map((d) => d.slice(5))}
+                  series={caloriesSeries}
+                  yAxisLabel="kcal"
+              />
+          )}
+        </section>
 
-      <section className="card">
-        <h2>Calories by activity</h2>
-        {loading ? (
-          <div className="chart-wrap">
-            <p className="chart-loading">Loading…</p>
-          </div>
-        ) : (
-          <StackedBarChart
-            labels={caloriesDates.map((d) => d.slice(5))}
-            series={caloriesSeries}
-            yAxisLabel="kcal"
-          />
+        <section className="range-toggle">
+          {TYPES.map((type) => (
+              <button key={type} type="button" className="range-btn" aria-pressed={activeType === type} onClick={() => setActiveType(type)}>
+                {type}
+              </button>
+          ))}
+        </section>
+
+        <section className="card">
+          <h2>Activities</h2>
+          <FoodList items={workoutListItems(workouts, selectedDate, { onDelete: handleDeleteWorkout })} />
+        </section>
+
+        {activeType === 'Running' && (
+            <RunningSection workouts={workouts} selectedDate={selectedDate} onSaved={refresh} onError={reportError} />
         )}
-      </section>
+        {activeType === 'Gym' && (
+            <GymSection
+                workouts={workouts}
+                gymExercises={gymExercises}
+                selectedDate={selectedDate}
+                weightEntries={weightEntries}
+                onSaved={refresh}
+                onError={reportError}
+            />
+        )}
+        {activeType === 'Other' && (
+            <OtherSection selectedDate={selectedDate} onSaved={refresh} onError={reportError} />
+        )}
 
-      <div className="range-toggle" style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-        {TYPES.map((type) => (
-          <button key={type} type="button" className="range-btn" aria-pressed={activeType === type} onClick={() => setActiveType(type)}>
-            {type}
-          </button>
-        ))}
+        {syncMessage.text && <p className={`message ${syncMessage.type}`.trim()} role="status">{syncMessage.text}</p>}
+
+        <Button variant="secondary" disabled={sheetLinkPending} onClick={handleOpenSheet}>
+          Open in Google Sheets
+        </Button>
       </div>
-
-      <section className="card">
-        <h2>Activities</h2>
-        <FoodList items={workoutListItems(workouts, selectedDate, { onDelete: handleDeleteWorkout })} />
-      </section>
-
-      {activeType === 'Running' && (
-        <RunningSection workouts={workouts} selectedDate={selectedDate} onSaved={refresh} onError={reportError} />
-      )}
-      {activeType === 'Gym' && (
-        <GymSection
-          workouts={workouts}
-          gymExercises={gymExercises}
-          selectedDate={selectedDate}
-          weightEntries={weightEntries}
-          onSaved={refresh}
-          onError={reportError}
-        />
-      )}
-      {activeType === 'Other' && (
-        <OtherSection selectedDate={selectedDate} onSaved={refresh} onError={reportError} />
-      )}
-
-      {syncMessage.text && <p className={`message ${syncMessage.type}`.trim()} role="status">{syncMessage.text}</p>}
-
-      <Button variant="secondary" disabled={sheetLinkPending} onClick={handleOpenSheet}>
-        Open in Google Sheets
-      </Button>
     </>
   );
 }

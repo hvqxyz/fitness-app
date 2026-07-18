@@ -88,8 +88,8 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
   const metricColor = (isDarkMode ? METRIC_COLOR.dark : METRIC_COLOR.light)[metric];
 
   return (
-    <div>
-      <div className="range-toggle" style={{ paddingTop: '10px', paddingBottom: '10px' }}>
+    <div className="card-chart">
+      <div className="range-toggle">
         <button type="button" className="button range-btn" aria-pressed={view === 'Tracker'} onClick={() => setView('Tracker')}>Tracker</button>
         <button type="button" className="button range-btn" aria-pressed={view === 'Analytics'} onClick={() => setView('Analytics')}>Analytics</button>
       </div>

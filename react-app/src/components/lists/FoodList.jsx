@@ -60,9 +60,10 @@ export function FoodList({ items }) {
                       </span>
 
                                             {hasDetails && (
-                                                isOpen
-                                                    ? <ChevronUp size={16} className="food-item-list-chevron" />
-                                                    : <ChevronDown size={16} className="food-item-list-chevron" />
+                                                <ChevronDown
+                                                    size={16}
+                                                    className={`food-item-list-chevron${isOpen ? " open" : ""}`}
+                                                />
                                             )}
 
                                             <Button
@@ -77,8 +78,12 @@ export function FoodList({ items }) {
                                             </Button>
                                         </div>
                                     </li>
-                                    {isOpen && (
-                                        <li className="food-item-list-details-row">{details}</li>
+                                    {hasDetails && (
+                                        <li className={`food-item-list-details-outer${isOpen ? " open" : ""}`}>
+                                            <div className="food-item-list-details-inner">
+                                                <div className="food-item-list-details-row">{details}</div>
+                                            </div>
+                                        </li>
                                     )}
                                 </Fragment>
                             );

@@ -15,6 +15,7 @@ const GYM_EXERCISES_SHEET = 'GymExercises';
 const EXERCISES_SHEET = 'Exercises';
 const TARGETS_HISTORY_SHEET = 'TargetsHistory';
 const ACTIVITY_HISTORY_SHEET = 'ActivityHistory';
+const MEASUREMENTS_SHEET = 'Measurements';
 
 const FOOD_HEADER = ['Date', 'Name', 'Kcal', 'Meal', 'WeightG', 'Fiber', 'Carbs', 'SatFat', 'UnsatFat', 'Protein'];
 const INGREDIENTS_HEADER = ['Name', 'KcalPer100g', 'FiberPer100g', 'CarbsPer100g', 'SatFatPer100g', 'UnsatFatPer100g', 'ProteinPer100g'];
@@ -24,6 +25,7 @@ const GYM_EXERCISES_HEADER = ['Template', 'Exercise', 'TargetReps', 'TargetSets'
 const EXERCISES_HEADER = ['Name'];
 const TARGETS_HISTORY_HEADER = ['Date', 'TargetKcal', 'ProteinPercent', 'CarbsPercent', 'FatPercent'];
 const ACTIVITY_HISTORY_HEADER = ['Date', 'ActivityMultiplier', 'DailyDeficit', 'GoalType', 'RateKgPerWeek'];
+const MEASUREMENTS_HEADER = ['Date', 'WaistCm', 'ChestCm', 'HipsCm', 'ArmsCm', 'ThighsCm', 'NeckCm'];
 
 let spreadsheetId = localStorage.getItem(SPREADSHEET_ID_KEY);
 let sheetIds = null; // { Weight: <numeric id>, Food: <numeric id> }
@@ -73,6 +75,7 @@ async function findOrCreateSpreadsheet() {
         { properties: { title: EXERCISES_SHEET } },
         { properties: { title: TARGETS_HISTORY_SHEET } },
         { properties: { title: ACTIVITY_HISTORY_SHEET } },
+        { properties: { title: MEASUREMENTS_SHEET } },
       ],
     }),
   });
@@ -121,6 +124,10 @@ async function findOrCreateSpreadsheet() {
   await apiFetch(`${spreadsheetId}/values/${ACTIVITY_HISTORY_SHEET}!A1:E1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [ACTIVITY_HISTORY_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${MEASUREMENTS_SHEET}!A1:G1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [MEASUREMENTS_HEADER] }),
   });
 
   return spreadsheetId;
@@ -403,6 +410,25 @@ async function splitHistorySheets() {
   ]);
 }
 
+/**
+ * Adds the Measurements tab (body-measurement history, one row per date) to
+ * spreadsheets created before this feature existed.
+ */
+async function ensureMeasurementsSheet() {
+  if (sheetIds[MEASUREMENTS_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: MEASUREMENTS_SHEET } } }] }),
+  });
+  sheetIds[MEASUREMENTS_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${MEASUREMENTS_SHEET}!A1:G1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [MEASUREMENTS_HEADER] }),
+  });
+}
+
 async function loadSheetIds() {
   if (sheetIds) return sheetIds;
   const meta = await apiFetch(`${spreadsheetId}?fields=sheets.properties`);
@@ -430,6 +456,7 @@ export async function ensureSpreadsheet() {
   await ensureExercisesSheet();
   await ensureTargetsHistorySheet();
   await ensureHistorySheetsSplit();
+  await ensureMeasurementsSheet();
   return spreadsheetId;
 }
 
@@ -682,6 +709,7 @@ export const SHEET_NAMES = {
   EXERCISES: EXERCISES_SHEET,
   TARGETS_HISTORY: TARGETS_HISTORY_SHEET,
   ACTIVITY_HISTORY: ACTIVITY_HISTORY_SHEET,
+  MEASUREMENTS: MEASUREMENTS_SHEET,
 };
 
 /**
@@ -761,6 +789,37 @@ export async function putActivityHistoryRow(row, date, activityMultiplier, daily
   await apiFetch(`${id}/values/${range}?valueInputOption=RAW`, {
     method: row ? 'PUT' : 'POST',
     body: JSON.stringify({ values: [[date, activityMultiplier, dailyDeficit, goalType, rateKgPerWeek]] }),
+  });
+}
+
+/** Body-measurement snapshots, oldest first. */
+export async function fetchMeasurements() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${MEASUREMENTS_SHEET}!A2:G?valueRenderOption=UNFORMATTED_VALUE`);
+  const num = (v) => (v !== undefined && v !== '' ? parseFloat(v) : null);
+  return (result.values || [])
+    .map((row, i) => {
+      const [date, waistCm, chestCm, hipsCm, armsCm, thighsCm, neckCm] = row;
+      return {
+        date,
+        waistCm: num(waistCm),
+        chestCm: num(chestCm),
+        hipsCm: num(hipsCm),
+        armsCm: num(armsCm),
+        thighsCm: num(thighsCm),
+        neckCm: num(neckCm),
+        _row: i + 2,
+      };
+    })
+    .filter((entry) => entry.date);
+}
+
+export async function putMeasurementsRow(row, date, waistCm, chestCm, hipsCm, armsCm, thighsCm, neckCm) {
+  const id = await ensureSpreadsheet();
+  const range = row ? `${MEASUREMENTS_SHEET}!A${row}:G${row}` : `${MEASUREMENTS_SHEET}:append`;
+  await apiFetch(`${id}/values/${range}?valueInputOption=RAW`, {
+    method: row ? 'PUT' : 'POST',
+    body: JSON.stringify({ values: [[date, waistCm ?? '', chestCm ?? '', hipsCm ?? '', armsCm ?? '', thighsCm ?? '', neckCm ?? '']] }),
   });
 }
 

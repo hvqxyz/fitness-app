@@ -20,6 +20,8 @@ import {
   putTargetsHistoryRow,
   fetchActivityHistory,
   putActivityHistoryRow,
+  fetchMeasurements,
+  putMeasurementsRow,
   ensureSpreadsheet,
   getSheetGid,
   SHEET_NAMES,
@@ -529,6 +531,25 @@ export async function getActivityHistory() {
 
 export async function deleteActivityHistoryEntry(row) {
   await deleteRows(SHEET_NAMES.ACTIVITY_HISTORY, [row]);
+}
+
+/**
+ * Body-measurement snapshots managed on the Measurements page, oldest first.
+ * values: { waistCm, chestCm, hipsCm, armsCm, thighsCm, neckCm }, each optional.
+ */
+export async function getMeasurements() {
+  return fetchMeasurements();
+}
+
+export async function upsertMeasurement(date, values) {
+  const { waistCm, chestCm, hipsCm, armsCm, thighsCm, neckCm } = values;
+  const measurements = await fetchMeasurements();
+  const existingRow = measurements.find((m) => m.date === date)?._row;
+  await putMeasurementsRow(existingRow, date, waistCm, chestCm, hipsCm, armsCm, thighsCm, neckCm);
+}
+
+export async function deleteMeasurementEntry(row) {
+  await deleteRows(SHEET_NAMES.MEASUREMENTS, [row]);
 }
 
 export function latestActivityHistory(activityHistory) {
