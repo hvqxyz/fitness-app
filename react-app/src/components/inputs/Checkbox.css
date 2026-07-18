@@ -1,0 +1,76 @@
+.checkbox-field {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-field-ui {
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+
+  padding: .65rem 1rem;
+
+  border: 1px solid var(--gridline);
+  border-radius: 999px;
+
+  background: var(--surface);
+
+  color: var(--text-secondary);
+
+  font-size: .95rem;
+  font-weight: 500;
+
+  transition:
+          background .18s ease,
+          border-color .18s ease,
+          color .18s ease,
+          transform .12s ease;
+}
+
+.checkbox-field-ui svg {
+  width: 18px;
+  height: 18px;
+
+  color: white;
+
+  transition:
+          opacity .18s ease,
+          transform .18s ease;
+}
+
+.chip-checkbox-ui svg path {
+  stroke: currentColor;
+}
+
+.checkbox-field:hover .checkbox-field-ui {
+  border-color: var(--page);
+  color: var(--accent);
+}
+
+.checkbox-field:active .chip-checkbox-ui {
+  transform: scale(.98);
+}
+
+.checkbox-field input:checked + .chip-checkbox-ui {
+  background: rgba(59,130,246,.12);
+  border-color: var(--page);
+  color: var(--accent);
+}
+
+.checkbox-field input:checked + .chip-checkbox-ui svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkbox-field:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkbox-field input:disabled {
+  cursor: not-allowed;
+}
