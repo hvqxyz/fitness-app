@@ -98,7 +98,7 @@ export function WeightPage() {
 
       <section className="card">
         <h2>Weight</h2>
-          <div className="row">
+          <form className="row" onSubmit={handleSubmit}>
             <NumberInput
                 placeholder="Kg"
                 step="0.1"
@@ -112,7 +112,7 @@ export function WeightPage() {
             {syncMessage.text && (
                 <p className={`message ${syncMessage.type}`.trim()} role="status">{syncMessage.text}</p>
             )}
-          </div>
+          </form>
       </section>
 
       <section className="stat-grid">

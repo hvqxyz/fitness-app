@@ -90,7 +90,10 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
 
   return (
     <div className="card-chart">
-      <Tabs value={view} onChange={setView} tabs={['Tracker', 'Analytics']} />
+      <div className="range-toggle">
+        <button type="button" className="button range-btn" aria-pressed={view === 'Tracker'} onClick={() => setView('Tracker')}>Tracker</button>
+        <button type="button" className="button range-btn" aria-pressed={view === 'Analytics'} onClick={() => setView('Analytics')}>Analytics</button>
+      </div>
 
       {view === 'Tracker' && (
         <section className="card">

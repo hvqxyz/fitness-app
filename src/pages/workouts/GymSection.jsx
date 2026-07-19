@@ -56,7 +56,10 @@ export function GymSection({ workouts, gymExercises, selectedDate, weightEntries
 
   return (
     <div>
-      <Tabs value={view} onChange={setView} tabs={['Tracker', 'Analytics']} style={{ marginBottom: '10px', marginTop: '10px' }} />
+      <div className="range-toggle" style={{ marginBottom: '10px', marginTop: '10px' }}>
+        <button type="button" className="button range-btn" aria-pressed={view === 'Tracker'} onClick={() => setView('Tracker')}>Tracker</button>
+        <button type="button" className="button range-btn" aria-pressed={view === 'Analytics'} onClick={() => setView('Analytics')}>Analytics</button>
+      </div>
 
       {view === 'Tracker' && (
         <section className="card">
