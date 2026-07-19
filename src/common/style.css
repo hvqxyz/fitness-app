@@ -96,40 +96,6 @@ body {
   text-decoration: none;
 }
 
-.tabs {
-  display: flex;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--page);
-  border-bottom: 1px solid var(--gridline);
-  padding: 0 1rem;
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-.tab-btn {
-  flex: 1;
-  min-height: 44px;
-  padding: 0.6rem 0.5rem;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  font-weight: 600;
-  border-bottom: 2px solid transparent;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tab-btn[aria-selected="true"] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
 main {
   display: flex;
   flex-direction: column;
@@ -839,70 +805,4 @@ tfoot th {
   font-weight: 600;
   color: #f3f4f6;
   letter-spacing: 0.02em;
-}
-
-.meal-summary {
-  border: 1px solid var(--gridline);
-  border-radius: 18px;
-
-  background: rgba(255,255,255,.015);
-
-  overflow: hidden;
-}
-
-.meal-summary-grid {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 1rem 1.25rem;
-
-  padding: 1rem;
-}
-
-.meal-summary-item {
-  display: flex;
-  flex-direction: column;
-  gap: .45rem;
-}
-
-.meal-summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  gap: .5rem;
-}
-
-.meal-summary-title {
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-
-  font-size: .9rem;
-  font-weight: 600;
-
-  color: var(--text);
-}
-
-.meal-summary-title svg {
-  color: var(--primary);
-}
-
-.meal-summary-value {
-  font-size: .82rem;
-  font-weight: 500;
-
-  color: var(--text-secondary);
-
-  white-space: nowrap;
-}
-
-.meal-summary-footer {
-  display: flex;
-  justify-content: flex-end;
-
-  border-top: 1px solid var(--gridline);
-
-  background: rgba(255,255,255,.01);
 }

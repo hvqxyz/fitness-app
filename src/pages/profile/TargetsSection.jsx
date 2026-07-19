@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { saveProfile } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Tabs } from '../../components/nav/Tabs.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { ActivityFactorView } from './ActivityFactorView.jsx';
 import { TargetsOnlyView } from './TargetsOnlyView.jsx';
@@ -50,10 +51,12 @@ export function TargetsSection({ profile, prevWeekAvgWeight, targetsHistory, act
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
       </section>
 
-      <div className="range-toggle" style={{ marginTop: '10px' }}>
-        <button type="button" className="button range-btn" aria-pressed={view === 'Activity'} onClick={() => setView('Activity')}>Activity Factor</button>
-        <button type="button" className="button range-btn" aria-pressed={view === 'Targets'} onClick={() => setView('Targets')}>Targets</button>
-      </div>
+      <Tabs
+        value={view}
+        onChange={setView}
+        tabs={[{ value: 'Activity', label: 'Activity Factor' }, { value: 'Targets', label: 'Targets' }]}
+        style={{ marginTop: '10px' }}
+      />
 
       {view === 'Activity' && (
         <ActivityFactorView profile={profile} prevWeekAvgWeight={prevWeekAvgWeight} activityHistory={activityHistory} onSaved={onActivitySaved} />

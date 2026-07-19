@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import { addWorkout, deleteWorkout, gymExerciseSummaryStats, GYM_TEMPLATES } from '../../common/storage.js';
 import { renderGymExerciseSetsChart, renderGymExerciseKilosTrendChart } from '../../common/workout-chart.js';
 import { ChartCanvas } from '../../components/ChartCanvas.jsx';
+import { Tabs } from '../../components/nav/Tabs.jsx';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
 import { GymExerciseLog } from './GymExerciseLog.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Select } from '../../components/inputs/Select.jsx';
+import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 
 const DAYS_OPTIONS = [7, 30, 90];
 
@@ -53,17 +56,12 @@ export function GymSection({ workouts, gymExercises, selectedDate, weightEntries
 
   return (
     <div>
-      <div className="range-toggle" style={{ marginBottom: '10px', marginTop: '10px' }}>
-        <button type="button" className="button range-btn" aria-pressed={view === 'Tracker'} onClick={() => setView('Tracker')}>Tracker</button>
-        <button type="button" className="button range-btn" aria-pressed={view === 'Analytics'} onClick={() => setView('Analytics')}>Analytics</button>
-      </div>
+      <Tabs value={view} onChange={setView} tabs={['Tracker', 'Analytics']} style={{ marginBottom: '10px', marginTop: '10px' }} />
 
       {view === 'Tracker' && (
         <section className="card">
           <h2>Gym</h2>
-          <select value={activeTemplate} onChange={(e) => setActiveTemplate(e.target.value)}>
-            {GYM_TEMPLATES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <Select value={activeTemplate} onChange={setActiveTemplate} options={GYM_TEMPLATES} />
 
           <GymExerciseLog
             gymExercises={gymExercises}
@@ -77,15 +75,13 @@ export function GymSection({ workouts, gymExercises, selectedDate, weightEntries
           <div className="inline-form">
             <div className="form-field">
               <label htmlFor="gym-session-calories-input">Workout calories</label>
-              <input
+              <NumberInput
                 id="gym-session-calories-input"
-                type="number"
                 placeholder="Workout calories"
                 step="1"
                 min="0"
-                inputMode="numeric"
                 value={sessionCalories}
-                onChange={(e) => setSessionCalories(e.target.value)}
+                onChange={setSessionCalories}
               />
             </div>
             <Button onClick={handleSaveSessionCalories}>Save calories</Button>
@@ -96,9 +92,7 @@ export function GymSection({ workouts, gymExercises, selectedDate, weightEntries
       {view === 'Analytics' && (
         <section className="card">
           <h2>Analytics</h2>
-          <select value={analyticsExercise} onChange={(e) => setAnalyticsExercise(e.target.value)}>
-            {templateExercises.map((ex) => <option key={ex.exercise} value={ex.exercise}>{ex.exercise}</option>)}
-          </select>
+          <Select value={analyticsExercise} onChange={setAnalyticsExercise} options={templateExercises.map((ex) => ex.exercise)} />
 
           <div className="range-toggle" style={{ paddingTop: '10px' }}>
             {DAYS_OPTIONS.map((d) => (

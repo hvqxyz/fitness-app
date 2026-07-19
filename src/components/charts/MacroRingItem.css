@@ -36,15 +36,26 @@
 .macro-ring-center {
   position: absolute;
   inset: 0;
+  flex-direction: column;
 
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
+.macro-ring-exceeded .macro-ring-progress {
+  stroke: #ef4444;
+}
+
 .macro-ring-value {
   font-size: 1.05rem;
   font-weight: 600;
+  color: var(--text);
+}
+
+.macro-ring-value-max {
+  font-size: 0.65rem;
+  font-weight: 400;
   color: var(--text);
 }
 

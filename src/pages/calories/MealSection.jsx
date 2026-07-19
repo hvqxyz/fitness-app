@@ -14,6 +14,7 @@ import {
   Plus,
   Minus
 } from "lucide-react";
+import './MealSection.css'
 
 const MEAL_MACRO_CONFIGS = [
   { key: 'calories', label: 'Calories', unit: 'kcal' },

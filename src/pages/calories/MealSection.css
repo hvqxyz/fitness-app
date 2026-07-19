@@ -1,0 +1,71 @@
+.meal-summary {
+  border: 1px solid var(--gridline);
+  border-radius: 18px;
+
+  background: rgba(255,255,255,.015);
+
+  overflow: hidden;
+}
+
+.meal-summary-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 1rem 1.25rem;
+
+  padding: 1rem;
+}
+
+.meal-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+
+.meal-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: .5rem;
+}
+
+.meal-summary-title {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+
+  font-size: .9rem;
+  font-weight: 600;
+
+  color: var(--text);
+}
+
+.meal-summary-title svg {
+  color: var(--primary);
+}
+
+.meal-summary-value {
+  font-size: .82rem;
+  font-weight: 500;
+
+  color: var(--text-secondary);
+
+  white-space: nowrap;
+}
+
+.meal-summary-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  border-top: 1px solid var(--gridline);
+
+  background: rgba(255,255,255,.01);
+}
+
+@media (max-width: 480px) {
+  .meal-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -18,6 +18,8 @@ import { TargetsSection } from './profile/TargetsSection.jsx';
 import { FoodDatabaseSection } from './profile/FoodDatabaseSection.jsx';
 import { GymTemplatesSection } from './profile/GymTemplatesSection.jsx';
 import { BackupSection } from './profile/BackupSection.jsx';
+import { Tabs } from '../components/nav/Tabs.jsx';
+
 
 const VIEWS = ['Targets', 'Food', 'Gym'];
 const VIEW_LABELS = { Targets: 'Targets and History', Food: 'Food Database', Gym: 'Gym Templates and Exercises' };
@@ -108,13 +110,7 @@ export function ProfilePage() {
         </div>
       </section>
 
-      <div className="range-toggle">
-        {VIEWS.map((v) => (
-          <button key={v} type="button" className="button range-btn" aria-pressed={view === v} onClick={() => setView(v)}>
-            {VIEW_LABELS[v]}
-          </button>
-        ))}
-      </div>
+      <Tabs value={view} onChange={setView} tabs={VIEWS.map((v) => ({ value: v, label: VIEW_LABELS[v] }))} />
 
       {view === 'Targets' && (
         <TargetsSection

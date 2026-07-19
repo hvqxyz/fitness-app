@@ -7,6 +7,7 @@ import {
   decimalMinutesToPaceLabel,
 } from '../../common/storage.js';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
+import { Tabs } from '../../components/nav/Tabs.jsx';
 import { LineChart } from '../../components/charts/LineChart.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
@@ -89,10 +90,7 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
 
   return (
     <div className="card-chart">
-      <div className="range-toggle">
-        <button type="button" className="button range-btn" aria-pressed={view === 'Tracker'} onClick={() => setView('Tracker')}>Tracker</button>
-        <button type="button" className="button range-btn" aria-pressed={view === 'Analytics'} onClick={() => setView('Analytics')}>Analytics</button>
-      </div>
+      <Tabs value={view} onChange={setView} tabs={['Tracker', 'Analytics']} />
 
       {view === 'Tracker' && (
         <section className="card">

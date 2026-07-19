@@ -25,6 +25,7 @@ import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { WeekCarousel } from '../components/nav/WeekCarousel.jsx';
 import { ProgressBar } from '../components/charts/ProgressBar.jsx';
 import { MacroRingItem } from '../components/charts/MacroRingItem.jsx';
+import { Tabs } from '../components/nav/Tabs.jsx';
 import { LineChart } from '../components/charts/LineChart.jsx';
 import { MealSection } from './calories/MealSection.jsx';
 import { CopyMealModal } from './calories/CopyMealModal.jsx';
@@ -183,10 +184,7 @@ export function CaloriesPage() {
     <>
       <DateCarousel selectedDate={selectedDate} onChange={handleDateChange} />
 
-      <div className="range-toggle">
-        <button type="button" className="button range-btn" aria-pressed={view === 'Tracker'} onClick={() => setView('Tracker')}>Tracker</button>
-        <button type="button" className="button range-btn" aria-pressed={view === 'Analytics'} onClick={() => setView('Analytics')}>Analytics</button>
-      </div>
+      <Tabs value={view} onChange={setView} tabs={['Tracker', 'Analytics']} />
 
       {view === 'Tracker' && (
         <div className="calorie-progress-tile">

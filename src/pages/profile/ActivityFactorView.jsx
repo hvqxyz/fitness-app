@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { saveActivitySettings, deleteActivityHistoryEntry, latestActivityHistory, computeBmr, startOfWeek, todayKey } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
+import { Tabs } from '../../components/nav/Tabs.jsx';
 import { FoodList } from '../../components/lists/FoodList.jsx';
 
 const KCAL_PER_KG = 7000;
@@ -89,10 +90,11 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
           <p className="ingredient-sub">Maintenance = BMR × activity multiplier. Goal adjustment uses 1 kg ≈ 7,000 kcal.</p>
 
           <h3>Aim</h3>
-          <div className="range-toggle">
-            <button type="button" className="button range-btn" aria-pressed={goalType === 'Lose'} onClick={() => setGoalType('Lose')}>Lose weight</button>
-            <button type="button" className="button range-btn" aria-pressed={goalType === 'Gain'} onClick={() => setGoalType('Gain')}>Gain weight</button>
-          </div>
+          <Tabs
+            value={goalType}
+            onChange={setGoalType}
+            tabs={[{ value: 'Lose', label: 'Lose weight' }, { value: 'Gain', label: 'Gain weight' }]}
+          />
           <NumberInput
             placeholder="kg per week"
             step="0.05"

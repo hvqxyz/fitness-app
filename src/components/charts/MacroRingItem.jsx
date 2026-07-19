@@ -1,7 +1,12 @@
 import "./MacroRingItem.css";
 
+function renderMaxValue(max) {
+    return max ?  <span className="macro-ring-value-max">{max.toFixed(0)}g</span> : "";
+}
+
 export function MacroRingItem({ value, max, title }) {
     const progress = Math.max(0, Math.min(value / max, 1));
+    const exceeded = max ? value > max : false;
 
     const size = 90;
     const stroke = 5;
@@ -10,7 +15,7 @@ export function MacroRingItem({ value, max, title }) {
 
     return (
         <div className="macro-ring-item">
-            <div className="macro-ring">
+            <div className={`macro-ring ${exceeded ? 'macro-ring-exceeded' : ''}`.trim()}>
                 <svg width={size} height={size}>
                     <circle
                         className="macro-ring-track"
@@ -33,6 +38,7 @@ export function MacroRingItem({ value, max, title }) {
 
                 <div className="macro-ring-center">
                     <span className="macro-ring-value">{value.toFixed(0)}g</span>
+                    {renderMaxValue(max)}
                 </div>
             </div>
 
