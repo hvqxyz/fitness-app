@@ -4,6 +4,7 @@ import { SearchInput } from '../../components/inputs/SearchInput.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
 import { IngredientModal } from './IngredientModal.jsx';
+import { FitatuImportModal } from './FitatuImportModal.jsx';
 
 const EMPTY_FORM = { kcal: '', fiber: '', carbs: '', satFat: '', unsatFat: '', protein: '' };
 
@@ -19,6 +20,7 @@ export function FoodDatabaseSection({ ingredients, onSaved }) {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [modalIngredient, setModalIngredient] = useState(null);
   const [sheetLinkPending, setSheetLinkPending] = useState(false);
+  const [fitatuModalOpen, setFitatuModalOpen] = useState(false);
 
   function checkDuplicateName(candidateName) {
     const trimmed = candidateName.trim();
@@ -71,6 +73,18 @@ export function FoodDatabaseSection({ ingredients, onSaved }) {
     } catch (err) {
       setMessage({ text: `Couldn't save to Google Sheets: ${err.message}`, type: 'error' });
     }
+  }
+
+  function handleFitatuImport(product) {
+    setForm({
+      kcal: product.kcal !== undefined ? String(product.kcal) : '',
+      fiber: product.fiber !== undefined ? String(product.fiber) : '',
+      carbs: product.carbs !== undefined ? String(product.carbs) : '',
+      satFat: product.satFat !== undefined ? String(product.satFat) : '',
+      unsatFat: product.unsatFat !== undefined ? String(product.unsatFat) : '',
+      protein: product.protein !== undefined ? String(product.protein) : '',
+    });
+    setMessage({ text: 'Imported from fitatu — set a food name, review the values, and save.', type: 'success' });
   }
 
   async function handleOpenSheet() {
@@ -139,12 +153,18 @@ export function FoodDatabaseSection({ ingredients, onSaved }) {
           </div>
           <Button type="submit" disabled={Boolean(duplicateName)}>Add food</Button>
         </form>
-        <Button variant="secondary" style={{ marginTop: '10px' }} disabled={sheetLinkPending} onClick={handleOpenSheet}>
-          Open in Google Sheets
-        </Button>
+        <div className="range-toggle" style={{ marginTop: '10px' }}>
+          <Button className="range-btn" variant="secondary" disabled={sheetLinkPending} onClick={handleOpenSheet}>
+            Open in Google Sheets
+          </Button>
+          <Button className="range-btn" variant="secondary" onClick={() => setFitatuModalOpen(true)}>
+            Import from fitatu
+          </Button>
+        </div>
       </section>
 
       <IngredientModal ingredient={modalIngredient} onClose={() => setModalIngredient(null)} onDelete={handleDelete} />
+      <FitatuImportModal open={fitatuModalOpen} onClose={() => setFitatuModalOpen(false)} onImport={handleFitatuImport} />
     </div>
   );
 }

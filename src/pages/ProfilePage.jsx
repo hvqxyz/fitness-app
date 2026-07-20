@@ -110,8 +110,13 @@ export function ProfilePage() {
         </div>
       </section>
 
-      <Tabs value={view} onChange={setView} tabs={VIEWS.map((v) => ({ value: v, label: VIEW_LABELS[v] }))} />
-
+      <div className="range-toggle">
+        {VIEWS.map((v) => (
+            <button key={v} type="button" className="button range-btn" aria-pressed={view === v} onClick={() => setView(v)}>
+              {VIEW_LABELS[v]}
+            </button>
+        ))}
+      </div>
       {view === 'Targets' && (
         <TargetsSection
           profile={profile}

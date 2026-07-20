@@ -90,11 +90,11 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
           <p className="ingredient-sub">Maintenance = BMR × activity multiplier. Goal adjustment uses 1 kg ≈ 7,000 kcal.</p>
 
           <h3>Aim</h3>
-          <Tabs
-            value={goalType}
-            onChange={setGoalType}
-            tabs={[{ value: 'Lose', label: 'Lose weight' }, { value: 'Gain', label: 'Gain weight' }]}
-          />
+          <div className="range-toggle">
+            <button type="button" className="button range-btn" aria-pressed={goalType === 'Lose'} onClick={() => setGoalType('Lose')}>Lose weight</button>
+            <button type="button" className="button range-btn" aria-pressed={goalType === 'Gain'} onClick={() => setGoalType('Gain')}>Gain weight</button>
+          </div>
+
           <NumberInput
             placeholder="kg per week"
             step="0.05"
