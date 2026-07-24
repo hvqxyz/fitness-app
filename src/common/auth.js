@@ -1,6 +1,6 @@
 import { GOOGLE_CLIENT_ID } from './config.js';
 
-const SCOPE = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const SESSION_KEY = 'fitness-counter-google-token';
 
 let tokenClient = null;
