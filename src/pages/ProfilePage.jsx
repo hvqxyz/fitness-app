@@ -5,6 +5,7 @@ import {
   getIngredients,
   getGymExercises,
   getExercises,
+  getGymTemplates,
   getTargetsHistory,
   getActivityHistory,
   weeklyPerformanceStats,
@@ -31,6 +32,7 @@ export function ProfilePage() {
   const [ingredients, setIngredients] = useState([]);
   const [gymExercises, setGymExercises] = useState([]);
   const [exerciseCatalog, setExerciseCatalog] = useState([]);
+  const [gymTemplates, setGymTemplates] = useState([]);
   const [targetsHistory, setTargetsHistory] = useState([]);
   const [activityHistory, setActivityHistory] = useState([]);
 
@@ -52,6 +54,10 @@ export function ProfilePage() {
     setExerciseCatalog(await getExercises());
   }, []);
 
+  const refreshGymTemplates = useCallback(async () => {
+    setGymTemplates(await getGymTemplates());
+  }, []);
+
   const refreshTargetsHistory = useCallback(async () => {
     setTargetsHistory(await getTargetsHistory());
   }, []);
@@ -66,10 +72,11 @@ export function ProfilePage() {
       refreshIngredients(),
       refreshGymExercises(),
       refreshExerciseCatalog(),
+      refreshGymTemplates(),
       refreshTargetsHistory(),
       refreshActivityHistory(),
     ]).catch(() => {});
-  }, [refreshCore, refreshIngredients, refreshGymExercises, refreshExerciseCatalog, refreshTargetsHistory, refreshActivityHistory]);
+  }, [refreshCore, refreshIngredients, refreshGymExercises, refreshExerciseCatalog, refreshGymTemplates, refreshTargetsHistory, refreshActivityHistory]);
 
   const onTargetsSaved = useCallback(async () => {
     await Promise.all([refreshCore(), refreshTargetsHistory()]);
@@ -135,8 +142,10 @@ export function ProfilePage() {
         <GymTemplatesSection
           exerciseCatalog={exerciseCatalog}
           gymExercises={gymExercises}
+          gymTemplates={gymTemplates}
           onExerciseCatalogChanged={refreshExerciseCatalog}
           onGymExercisesChanged={onGymExercisesChanged}
+          onGymTemplatesChanged={refreshGymTemplates}
         />
       )}
 

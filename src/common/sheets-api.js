@@ -13,6 +13,7 @@ const INGREDIENTS_SHEET = 'Ingredients';
 const WORKOUTS_SHEET = 'Workouts';
 const GYM_EXERCISES_SHEET = 'GymExercises';
 const EXERCISES_SHEET = 'Exercises';
+const GYM_TEMPLATES_SHEET = 'GymTemplates';
 const TARGETS_HISTORY_SHEET = 'TargetsHistory';
 const ACTIVITY_HISTORY_SHEET = 'ActivityHistory';
 const MEASUREMENTS_SHEET = 'Measurements';
@@ -23,6 +24,8 @@ const PROFILE_HEADER = ['Age', 'HeightCm', 'TargetKcal', 'ProteinPercent', 'Carb
 const WORKOUTS_HEADER = ['Date', 'Type', 'DistanceKm', 'PaceMinPerKm', 'HeartRate', 'GymTemplate', 'Note', 'Calories', 'Exercise', 'Reps', 'Kilos', 'Sets', 'RunningType', 'SetKilos'];
 const GYM_EXERCISES_HEADER = ['Template', 'Exercise', 'TargetReps', 'TargetSets'];
 const EXERCISES_HEADER = ['Name'];
+const GYM_TEMPLATES_HEADER = ['Name'];
+const DEFAULT_GYM_TEMPLATES = ['Training A', 'Training B'];
 const TARGETS_HISTORY_HEADER = ['Date', 'TargetKcal', 'ProteinPercent', 'CarbsPercent', 'FatPercent'];
 const ACTIVITY_HISTORY_HEADER = ['Date', 'ActivityMultiplier', 'DailyDeficit', 'GoalType', 'RateKgPerWeek'];
 const MEASUREMENTS_HEADER = ['Date', 'WaistCm', 'ChestCm', 'HipsCm', 'ArmsCm', 'ThighsCm', 'NeckCm'];
@@ -73,6 +76,7 @@ async function findOrCreateSpreadsheet() {
         { properties: { title: WORKOUTS_SHEET } },
         { properties: { title: GYM_EXERCISES_SHEET } },
         { properties: { title: EXERCISES_SHEET } },
+        { properties: { title: GYM_TEMPLATES_SHEET } },
         { properties: { title: TARGETS_HISTORY_SHEET } },
         { properties: { title: ACTIVITY_HISTORY_SHEET } },
         { properties: { title: MEASUREMENTS_SHEET } },
@@ -116,6 +120,14 @@ async function findOrCreateSpreadsheet() {
   await apiFetch(`${spreadsheetId}/values/${EXERCISES_SHEET}!A1:A1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [EXERCISES_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${GYM_TEMPLATES_SHEET}!A1:A1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [GYM_TEMPLATES_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${GYM_TEMPLATES_SHEET}!A2?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: DEFAULT_GYM_TEMPLATES.map((name) => [name]) }),
   });
   await apiFetch(`${spreadsheetId}/values/${TARGETS_HISTORY_SHEET}!A1:E1?valueInputOption=RAW`, {
     method: 'PUT',
@@ -295,6 +307,31 @@ async function ensureExercisesSheet() {
 }
 
 /**
+ * Adds the GymTemplates tab (the user-editable list of gym templates, e.g.
+ * "Training A"/"Training B") to spreadsheets created before this feature
+ * existed, seeded with those two names so existing GymExercises/Workouts
+ * rows (which already reference them) keep matching a known template.
+ */
+async function ensureGymTemplatesSheet() {
+  if (sheetIds[GYM_TEMPLATES_SHEET] !== undefined) return;
+
+  const result = await apiFetch(`${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: GYM_TEMPLATES_SHEET } } }] }),
+  });
+  sheetIds[GYM_TEMPLATES_SHEET] = result.replies[0].addSheet.properties.sheetId;
+
+  await apiFetch(`${spreadsheetId}/values/${GYM_TEMPLATES_SHEET}!A1:A1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: [GYM_TEMPLATES_HEADER] }),
+  });
+  await apiFetch(`${spreadsheetId}/values/${GYM_TEMPLATES_SHEET}!A2?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: DEFAULT_GYM_TEMPLATES.map((name) => [name]) }),
+  });
+}
+
+/**
  * Adds the TargetsHistory tab (a snapshot of calorie/macro targets, one row
  * per time "Save targets" is clicked) to older spreadsheets.
  */
@@ -454,6 +491,7 @@ export async function ensureSpreadsheet() {
   await ensureGymExercisesSheet();
   await ensureGymExercisesTargetSetsHeader();
   await ensureExercisesSheet();
+  await ensureGymTemplatesSheet();
   await ensureTargetsHistorySheet();
   await ensureHistorySheetsSplit();
   await ensureMeasurementsSheet();
@@ -707,6 +745,7 @@ export const SHEET_NAMES = {
   WORKOUTS: WORKOUTS_SHEET,
   GYM_EXERCISES: GYM_EXERCISES_SHEET,
   EXERCISES: EXERCISES_SHEET,
+  GYM_TEMPLATES: GYM_TEMPLATES_SHEET,
   TARGETS_HISTORY: TARGETS_HISTORY_SHEET,
   ACTIVITY_HISTORY: ACTIVITY_HISTORY_SHEET,
   MEASUREMENTS: MEASUREMENTS_SHEET,
@@ -729,6 +768,26 @@ export async function fetchExercises() {
 export async function appendExerciseRow(name) {
   const id = await ensureSpreadsheet();
   await apiFetch(`${id}/values/${EXERCISES_SHEET}:append?valueInputOption=RAW`, {
+    method: 'POST',
+    body: JSON.stringify({ values: [[name]] }),
+  });
+}
+
+/**
+ * The user-editable list of gym templates (e.g. "Training A", "Training B"),
+ * managed on the Profile page — used to group GymExercises and tag Workouts.
+ */
+export async function fetchGymTemplates() {
+  const id = await ensureSpreadsheet();
+  const result = await apiFetch(`${id}/values/${GYM_TEMPLATES_SHEET}!A2:A?valueRenderOption=UNFORMATTED_VALUE`);
+  return (result.values || [])
+    .map((row, i) => ({ name: row[0], _row: i + 2 }))
+    .filter((t) => t.name);
+}
+
+export async function appendGymTemplateRow(name) {
+  const id = await ensureSpreadsheet();
+  await apiFetch(`${id}/values/${GYM_TEMPLATES_SHEET}:append?valueInputOption=RAW`, {
     method: 'POST',
     body: JSON.stringify({ values: [[name]] }),
   });

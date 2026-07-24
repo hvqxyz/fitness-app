@@ -100,7 +100,7 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
     <li>
       <span className="food-name">{ex.exercise}</span>
       <span className="ingredient-sub">Target: {ex.targetReps} reps × {ex.targetSets} sets</span>
-      <div className="gym-log-fields">
+      <div >
         <div className="gym-log-fields">
           <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
           {!useSetKilos && (

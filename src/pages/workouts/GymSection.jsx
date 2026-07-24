@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { addWorkout, deleteWorkout, gymExerciseSummaryStats, GYM_TEMPLATES } from '../../common/storage.js';
+import { addWorkout, deleteWorkout, gymExerciseSummaryStats } from '../../common/storage.js';
 import { renderGymExerciseSetsChart, renderGymExerciseKilosTrendChart } from '../../common/workout-chart.js';
 import { ChartCanvas } from '../../components/ChartCanvas.jsx';
 import { Tabs } from '../../components/nav/Tabs.jsx';
@@ -15,15 +15,21 @@ function findGymSessionCaloriesEntry(workouts, selectedDate, gymTemplate) {
   return workouts.find((w) => w.date === selectedDate && w.type === 'Gym' && w.gymTemplate === gymTemplate && !w.exercise);
 }
 
-export function GymSection({ workouts, gymExercises, selectedDate, weightEntries, onSaved, onError }) {
+export function GymSection({ workouts, gymExercises, gymTemplates, selectedDate, weightEntries, onSaved, onError }) {
   const [view, setView] = useState('Tracker');
-  const [activeTemplate, setActiveTemplate] = useState(GYM_TEMPLATES[0]);
+  const [activeTemplate, setActiveTemplate] = useState('');
   const [sessionCalories, setSessionCalories] = useState('');
   const [analyticsExercise, setAnalyticsExercise] = useState('');
   const [analyticsDays, setAnalyticsDays] = useState(30);
   const [kilosTrendMode, setKilosTrendMode] = useState('avg');
 
   const templateExercises = gymExercises.filter((ex) => ex.template === activeTemplate);
+
+  useEffect(() => {
+    if (gymTemplates.length && !gymTemplates.some((t) => t.name === activeTemplate)) {
+      setActiveTemplate(gymTemplates[0].name);
+    }
+  }, [gymTemplates, activeTemplate]);
 
   useEffect(() => {
     const existing = findGymSessionCaloriesEntry(workouts, selectedDate, activeTemplate);
@@ -64,7 +70,7 @@ export function GymSection({ workouts, gymExercises, selectedDate, weightEntries
       {view === 'Tracker' && (
         <section className="card">
           <h2>Gym</h2>
-          <Select value={activeTemplate} onChange={setActiveTemplate} options={GYM_TEMPLATES} />
+          <Select value={activeTemplate} onChange={setActiveTemplate} options={gymTemplates.map((t) => t.name)} />
 
           <GymExerciseLog
             gymExercises={gymExercises}

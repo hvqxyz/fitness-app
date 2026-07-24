@@ -16,6 +16,8 @@ import {
   appendGymExerciseRow,
   fetchExercises,
   appendExerciseRow,
+  fetchGymTemplates,
+  appendGymTemplateRow,
   fetchTargetsHistory,
   putTargetsHistoryRow,
   fetchActivityHistory,
@@ -43,7 +45,6 @@ export const MEAL_TYPES = [
 export const DEFAULT_MEAL = MEAL_TYPES[0];
 
 export const WORKOUT_TYPES = ['Running', 'Gym', 'Other'];
-export const GYM_TEMPLATES = ['Training A', 'Training B'];
 
 export function todayKey() {
   const d = new Date();
@@ -483,8 +484,8 @@ export async function deleteWorkouts(rows) {
 }
 
 /**
- * Gym exercises are grouped by which template (Training A/B) they belong
- * to, e.g. { template: 'Training A', exercise: 'Bench Press', targetReps, targetSets }.
+ * Gym exercises are grouped by which template they belong to (see
+ * getGymTemplates()), e.g. { template: 'Training A', exercise: 'Bench Press', targetReps, targetSets }.
  */
 export async function getGymExercises() {
   return fetchGymExercises();
@@ -512,6 +513,22 @@ export async function addExercise(name) {
 
 export async function deleteExercise(row) {
   await deleteRows(SHEET_NAMES.EXERCISES, [row]);
+}
+
+/**
+ * The user-editable list of gym templates (e.g. "Training A", "Training B"),
+ * managed on Profile — used to group gym exercises and tag gym workouts.
+ */
+export async function getGymTemplates() {
+  return fetchGymTemplates();
+}
+
+export async function addGymTemplate(name) {
+  await appendGymTemplateRow(name);
+}
+
+export async function deleteGymTemplate(row) {
+  await deleteRows(SHEET_NAMES.GYM_TEMPLATES, [row]);
 }
 
 /**

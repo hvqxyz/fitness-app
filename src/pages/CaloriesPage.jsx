@@ -329,7 +329,10 @@ export function CaloriesPage() {
               const { actual, target, avgActual, avgTarget } = weekStats[cfg.key];
               const percent = target ? Math.round((actual / target) * 100) : 0;
               const label = target !== null
-                ? `${Math.round(actual)} of ${Math.round(target)} ${cfg.unit} (${percent}%) — avg ${Math.round(avgActual)} of ${Math.round(avgTarget)} ${cfg.unit}/day`
+                ? `total ${Math.round(actual)} of ${Math.round(target)} ${cfg.unit} (${percent}%)`
+                : `${Math.round(actual)} ${cfg.unit} — no target set`;
+              const secondaryLabel = target !== null
+                ? `avg ${Math.round(avgActual)} of ${Math.round(avgTarget)} ${cfg.unit}/day`
                 : `${Math.round(actual)} ${cfg.unit} — no target set`;
               return (
                 <div className="week-macro-item" key={cfg.key}>
@@ -339,6 +342,7 @@ export function CaloriesPage() {
                     max={target ?? 0}
                     variant="compact"
                     label={label}
+                    secondaryLabel={secondaryLabel}
                   />
                 </div>
               );

@@ -536,6 +536,7 @@ label {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: stretch;
+  margin-bottom: 0.5rem;
 }
 
 .gym-log-list .gym-log-fields input {

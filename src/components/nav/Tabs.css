@@ -33,14 +33,22 @@
 }
 
 @media (max-width: 640px) {
+  .tabs {
+    padding: 0;
+  }
+
   .tab-btn {
     flex-direction: column;
     gap: .2rem;
 
-    min-width: 72px;
-    height: 58px;
+    min-width: 60px;
+    height: 36px;
 
-    font-size: .72rem;
+    font-size: .62rem;
+  }
+
+  .tab-btn {
+    min-height: 32px;
   }
 
   .tab-btn svg {

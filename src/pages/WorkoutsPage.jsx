@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getWorkouts, getGymExercises, loadData, getSelectedDate, setSelectedDate, getSpreadsheetUrl, SHEET_NAMES, workoutCaloriesByTypePoints, deleteWorkout, deleteWorkouts } from '../common/storage.js';
+import { getWorkouts, getGymExercises, getGymTemplates, loadData, getSelectedDate, setSelectedDate, getSpreadsheetUrl, SHEET_NAMES, workoutCaloriesByTypePoints, deleteWorkout, deleteWorkouts } from '../common/storage.js';
 import { workoutListItems } from '../common/workout-list.js';
 import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { StackedBarChart } from '../components/charts/StackedBarChart.jsx';
@@ -21,6 +21,7 @@ export function WorkoutsPage() {
   const [activeType, setActiveType] = useState('Running');
   const [workouts, setWorkouts] = useState([]);
   const [gymExercises, setGymExercises] = useState([]);
+  const [gymTemplates, setGymTemplates] = useState([]);
   const [weightEntries, setWeightEntries] = useState({});
   const [loading, setLoading] = useState(true);
   const [syncMessage, setSyncMessage] = useState({ text: '', type: '' });
@@ -29,9 +30,10 @@ export function WorkoutsPage() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [w, ge, data] = await Promise.all([getWorkouts(), getGymExercises(), loadData()]);
+      const [w, ge, gt, data] = await Promise.all([getWorkouts(), getGymExercises(), getGymTemplates(), loadData()]);
       setWorkouts(w);
       setGymExercises(ge);
+      setGymTemplates(gt);
       setWeightEntries(data.entries);
       setSyncMessage({ text: '', type: '' });
     } catch (err) {
@@ -120,6 +122,7 @@ export function WorkoutsPage() {
             <GymSection
                 workouts={workouts}
                 gymExercises={gymExercises}
+                gymTemplates={gymTemplates}
                 selectedDate={selectedDate}
                 weightEntries={weightEntries}
                 onSaved={refresh}

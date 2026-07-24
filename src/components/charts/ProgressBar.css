@@ -4,6 +4,12 @@
   gap: 0.45rem;
 }
 
+.progress-bar-label-value {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
 .progress-bar-chart-head {
   display: flex;
   justify-content: space-between;
@@ -17,6 +23,11 @@
 }
 
 .progress-bar-chart-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.progress-bar-chart-secondary-value {
   color: var(--text-primary);
   font-weight: 600;
 }
@@ -38,4 +49,20 @@
 
 .progress-bar-chart-fill.over {
   background: var(--critical);
+}
+
+@media (max-width: 480px) {
+  .progress-bar-label-value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+
+  }
+
+  .progress-bar-chart-secondary-value {
+    color: var(--text-primary);
+    font-size: 0.62rem;
+    font-weight: 200;
+  }
 }

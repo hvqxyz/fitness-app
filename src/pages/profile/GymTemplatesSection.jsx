@@ -1,20 +1,58 @@
-import { useState } from 'react';
-import { addExercise, deleteExercise, addGymExercise, deleteGymExercise, GYM_TEMPLATES } from '../../common/storage.js';
+import { useEffect, useState } from 'react';
+import { addExercise, deleteExercise, addGymExercise, deleteGymExercise, addGymTemplate, deleteGymTemplate } from '../../common/storage.js';
 import { SearchInput } from '../../components/inputs/SearchInput.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
 import { FoodList } from '../../components/lists/FoodList.jsx';
 
-export function GymTemplatesSection({ exerciseCatalog, gymExercises, onExerciseCatalogChanged, onGymExercisesChanged }) {
+export function GymTemplatesSection({ exerciseCatalog, gymExercises, gymTemplates, onExerciseCatalogChanged, onGymExercisesChanged, onGymTemplatesChanged }) {
   const [exerciseName, setExerciseName] = useState('');
   const [exerciseMessage, setExerciseMessage] = useState({ text: '', type: '' });
 
-  const [activeTemplate, setActiveTemplate] = useState(GYM_TEMPLATES[0]);
+  const [templateName, setTemplateName] = useState('');
+  const [templateMessage, setTemplateMessage] = useState({ text: '', type: '' });
+
+  const [activeTemplate, setActiveTemplate] = useState('');
   const [gymExerciseName, setGymExerciseName] = useState('');
   const [selectedCatalogExercise, setSelectedCatalogExercise] = useState(null);
   const [targetReps, setTargetReps] = useState('');
   const [targetSets, setTargetSets] = useState('');
   const [gymExerciseMessage, setGymExerciseMessage] = useState({ text: '', type: '' });
+
+  useEffect(() => {
+    if (gymTemplates.length && !gymTemplates.some((t) => t.name === activeTemplate)) {
+      setActiveTemplate(gymTemplates[0].name);
+    }
+  }, [gymTemplates, activeTemplate]);
+
+  async function handleAddTemplate(e) {
+    e.preventDefault();
+    const name = templateName.trim();
+    if (!name) return;
+    const duplicate = gymTemplates.find((t) => t.name.toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+      setTemplateMessage({ text: `"${duplicate.name}" is already in the list.`, type: 'error' });
+      return;
+    }
+    try {
+      await addGymTemplate(name);
+      setTemplateName('');
+      await onGymTemplatesChanged();
+      setTemplateMessage({ text: 'Template added.', type: 'success' });
+    } catch (err) {
+      setTemplateMessage({ text: `Couldn't save to Google Sheets: ${err.message}`, type: 'error' });
+    }
+  }
+
+  async function handleDeleteTemplate(t) {
+    if (!window.confirm(`Remove "${t.name}"? Its exercises stay in Google Sheets but won't show in the picker anymore.`)) return;
+    try {
+      await deleteGymTemplate(t._row);
+      await onGymTemplatesChanged();
+    } catch (err) {
+      setTemplateMessage({ text: `Couldn't save to Google Sheets: ${err.message}`, type: 'error' });
+    }
+  }
 
   async function handleAddExercise(e) {
     e.preventDefault();
@@ -67,7 +105,7 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, onExerciseC
   }
 
   async function handleDeleteGymExercise(ex) {
-    if (!window.confirm(`Remove "${ex.exercise}" from ${activeTemplate}?`)) return;
+    if (!window.confirm(`Remove "${ex.exercise}" from "${activeTemplate}"?`)) return;
     try {
       await deleteGymExercise(ex._row);
       await onGymExercisesChanged();
@@ -105,40 +143,64 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, onExerciseC
 
       <section className="card">
         <h2>Gym Templates</h2>
-        <div className="range-toggle">
-          {GYM_TEMPLATES.map((t) => (
-            <button key={t} type="button" className="button range-btn" aria-pressed={activeTemplate === t} onClick={() => setActiveTemplate(t)}>
-              {t}
-            </button>
-          ))}
-        </div>
-        <form className="ingredient-form" onSubmit={handleAddGymExercise}>
+        <form className="inline-form" onSubmit={handleAddTemplate}>
           <SearchInput
-            items={exerciseCatalog}
-            getLabel={(ex) => ex.name}
-            value={gymExerciseName}
-            onChange={(text) => {
-              setGymExerciseName(text);
-              setSelectedCatalogExercise(null);
-            }}
-            onSelect={setSelectedCatalogExercise}
-            placeholder="Choose exercise"
+            searchable={false}
+            placeholder="Template name (e.g. Push Day)"
             required
+            value={templateName}
+            onChange={setTemplateName}
           />
-          <NumberInput placeholder="Target reps" step="1" min="0" value={targetReps} onChange={setTargetReps} />
-          <NumberInput placeholder="Target sets" step="1" min="0" value={targetSets} onChange={setTargetSets} />
-          <Button type="submit">Add exercise</Button>
+          <Button type="submit">Add template</Button>
         </form>
         <FoodList
-          items={templateExercises.map((ex) => ({
-            key: ex.exercise,
-            label: ex.exercise,
-            value: `${ex.targetReps} target reps × ${ex.targetSets} target sets`,
-            removeLabel: `Remove ${ex.exercise}`,
-            onRemove: () => handleDeleteGymExercise(ex),
+          items={gymTemplates.map((t) => ({
+            key: t.name,
+            label: t.name,
+            removeLabel: `Remove ${t.name}`,
+            onRemove: () => handleDeleteTemplate(t),
           }))}
         />
-        {gymExerciseMessage.text && <p className={`message ${gymExerciseMessage.type}`.trim()} role="status">{gymExerciseMessage.text}</p>}
+        {templateMessage.text && <p className={`message ${templateMessage.type}`.trim()} role="status">{templateMessage.text}</p>}
+
+        {gymTemplates.length > 0 && (
+          <>
+            <div className="range-toggle">
+              {gymTemplates.map((t) => (
+                <button key={t.name} type="button" className="button range-btn" aria-pressed={activeTemplate === t.name} onClick={() => setActiveTemplate(t.name)}>
+                  {t.name}
+                </button>
+              ))}
+            </div>
+            <form className="ingredient-form" onSubmit={handleAddGymExercise}>
+              <SearchInput
+                items={exerciseCatalog}
+                getLabel={(ex) => ex.name}
+                value={gymExerciseName}
+                onChange={(text) => {
+                  setGymExerciseName(text);
+                  setSelectedCatalogExercise(null);
+                }}
+                onSelect={setSelectedCatalogExercise}
+                placeholder="Choose exercise"
+                required
+              />
+              <NumberInput placeholder="Target reps" step="1" min="0" value={targetReps} onChange={setTargetReps} />
+              <NumberInput placeholder="Target sets" step="1" min="0" value={targetSets} onChange={setTargetSets} />
+              <Button type="submit">Add exercise</Button>
+            </form>
+            <FoodList
+              items={templateExercises.map((ex) => ({
+                key: ex.exercise,
+                label: ex.exercise,
+                value: `${ex.targetReps} target reps × ${ex.targetSets} target sets`,
+                removeLabel: `Remove ${ex.exercise}`,
+                onRemove: () => handleDeleteGymExercise(ex),
+              }))}
+            />
+            {gymExerciseMessage.text && <p className={`message ${gymExerciseMessage.type}`.trim()} role="status">{gymExerciseMessage.text}</p>}
+          </>
+        )}
       </section>
     </div>
   );
