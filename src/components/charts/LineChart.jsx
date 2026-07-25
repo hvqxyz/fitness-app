@@ -11,10 +11,14 @@ export function LineChart({
                             color = '#3b82f6',
                             datasetLabel,
                             formatAverageLabel,
+                            secondValues,
+                            secondColor = '#e58a3d',
+                            secondDatasetLabel,
                             className = '',
                           }) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
+  const hasSecond = Array.isArray(secondValues);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -28,49 +32,76 @@ export function LineChart({
 
     chartRef.current?.destroy();
 
+    const datasets = [
+      {
+        label: datasetLabel,
+        data: values,
+
+        borderColor: color,
+        backgroundColor: color,
+
+        borderWidth: 3,
+        tension: 0.35,
+
+        pointRadius: 3,
+        pointHoverRadius: 5,
+
+        pointBackgroundColor: color,
+        pointBorderWidth: 0,
+
+        fill: false,
+        spanGaps: true,
+        yAxisID: 'y',
+      },
+
+      {
+        label:
+            average != null
+                ? formatAverageLabel(average)
+                : 'Average',
+
+        data: values.map(() => average),
+
+        borderColor: 'rgba(255,255,255,.25)',
+        borderDash: [4, 4],
+        borderWidth: 1,
+
+        pointRadius: 0,
+        fill: false,
+        yAxisID: 'y',
+      },
+    ];
+
+    if (hasSecond) {
+      datasets.push({
+        label: secondDatasetLabel,
+        data: secondValues,
+
+        borderColor: secondColor,
+        backgroundColor: secondColor,
+
+        borderWidth: 3,
+        tension: 0.35,
+
+        pointRadius: 3,
+        pointHoverRadius: 5,
+
+        pointBackgroundColor: secondColor,
+        pointBorderWidth: 0,
+
+        fill: false,
+        spanGaps: true,
+        yAxisID: 'y1',
+      });
+    }
+
     chartRef.current = new Chart(canvasRef.current, {
       type: 'line',
 
       data: {
         labels,
 
-        datasets: [
-          {
-            label: datasetLabel,
-            data: values,
-
-            borderColor: color,
-            backgroundColor: color,
-
-            borderWidth: 3,
-            tension: 0.35,
-
-            pointRadius: 3,
-            pointHoverRadius: 5,
-
-            pointBackgroundColor: color,
-            pointBorderWidth: 0,
-
-            fill: false,
-            spanGaps: true,
-          },
-
-          {
-            label:
-                average != null
-                    ? formatAverageLabel(average)
-                    : 'Average',
-
-            data: values.map(() => average),
-
-            borderColor: 'rgba(255,255,255,.25)',
-            borderDash: [4, 4],
-            borderWidth: 1,
-
-            pointRadius: 0,
-            fill: false,
-          },
-        ],
+        datasets,
       },
 
       options: {
@@ -147,6 +178,28 @@ export function LineChart({
               maxTicksLimit: 5,
             },
           },
+
+          ...(hasSecond
+              ? {
+                y1: {
+                  beginAtZero: false,
+                  position: 'right',
+
+                  grid: {
+                    display: false,
+                  },
+
+                  border: {
+                    display: false,
+                  },
+
+                  ticks: {
+                    color: '#8b8b8b',
+                    maxTicksLimit: 5,
+                  },
+                },
+              }
+              : {}),
         },
 
         animation: {
@@ -159,7 +212,7 @@ export function LineChart({
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [labels, values, color, datasetLabel, formatAverageLabel]);
+  }, [labels, values, color, datasetLabel, formatAverageLabel, hasSecond, secondValues, secondColor, secondDatasetLabel]);
 
   return (
       <div className={`chart-wrap ${className}`.trim()}>

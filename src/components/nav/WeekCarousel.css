@@ -59,8 +59,7 @@
     color: var(--accent);
 }
 
-.week-nav,
-.week-icon {
+.week-nav {
     width: 42px;
     height: 42px;
 
@@ -77,24 +76,9 @@
     transition: .18s;
 }
 
-.week-nav:hover,
-.week-icon:hover {
+.week-nav:hover {
     background: rgba(255,255,255,.04);
     color: var(--text);
-}
-
-.week-icon {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.week-icon input {
-    position: absolute;
-    inset: 0;
-
-    opacity: 0;
-    cursor: pointer;
 }
 
 @media (max-width: 768px) {
@@ -121,10 +105,6 @@
 }
 
 @media (max-width: 480px) {
-
-    .week-icon {
-        display: none;
-    }
 
     .week-pill {
         min-width: 88px;

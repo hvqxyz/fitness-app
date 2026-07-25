@@ -28,11 +28,14 @@ export function ProgressBar({ value, max, title, label, secondaryLabel, variant 
               <span className="progress-bar-chart-secondary-value">{label}</span>
             </div>
           )}
-          {!isMobile && (
-              <div className="progress-bar-label-value">
-                  <span className="progress-bar-chart-value">{label} - {secondaryLabel}</span>
-              </div>
-          )}
+            {!isMobile && (
+                <div className="progress-bar-label-value">
+                    <span className="progress-bar-chart-value">
+                      {label}
+                        {secondaryLabel ? ` - ${secondaryLabel}` : ""}
+                    </span>
+                </div>
+            )}
         </div>
         <div className="progress-bar-chart-track progress-bar-chart-track-compact">
           <div className={fillClass} style={fillStyle}></div>

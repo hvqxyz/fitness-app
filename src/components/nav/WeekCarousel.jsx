@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { startOfWeek, shiftDateKey, todayKey } from '../../common/storage.js';
+import { CalendarIconInput } from './CalendarIconInput.jsx';
 import './WeekCarousel.css';
 
 const WINDOW_RADIUS = 8;
@@ -48,17 +49,11 @@ export function WeekCarousel({ selectedWeek, onChange }) {
 
     return (
         <div className="week-carousel">
-            <label className="week-icon">
-                <CalendarDays size={18} />
-
-                <input
-                    type="date"
-                    value={weekStart}
-                    onChange={(e) =>
-                        e.target.value && onChange(startOfWeek(e.target.value))
-                    }
-                />
-            </label>
+            <CalendarIconInput
+                className="week-icon"
+                value={weekStart}
+                onChange={(value) => onChange(startOfWeek(value))}
+            />
 
             <button
                 className="week-nav"

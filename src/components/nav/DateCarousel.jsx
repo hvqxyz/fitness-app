@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { todayKey, shiftDateKey } from '../../common/storage.js';
+import { CalendarIconInput } from './CalendarIconInput.jsx';
 import './DateCarousel.css';
 
 const WINDOW_RADIUS = 15;
@@ -31,15 +32,11 @@ export function DateCarousel({ selectedDate, onChange }) {
     return (
         <section className="day-carousel">
 
-            <label className="day-carousel-icon">
-                <CalendarDays size={18} />
-
-                <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => e.target.value && onChange(e.target.value)}
-                />
-            </label>
+            <CalendarIconInput
+                className="day-carousel-icon"
+                value={selectedDate}
+                onChange={onChange}
+            />
 
             <button
                 className="day-carousel-nav"

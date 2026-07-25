@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { addWorkout, deleteWorkout, gymExerciseSummaryStats } from '../../common/storage.js';
 import { renderGymExerciseSetsChart, renderGymExerciseKilosTrendChart } from '../../common/workout-chart.js';
 import { ChartCanvas } from '../../components/ChartCanvas.jsx';
-import { Tabs } from '../../components/nav/Tabs.jsx';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
 import { GymExerciseLog } from './GymExerciseLog.jsx';
 import { Button } from '../../components/buttons/Button.jsx';

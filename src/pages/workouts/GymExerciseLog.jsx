@@ -18,6 +18,7 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
   const [sets, setSets] = useState('');
   const [useSetKilos, setUseSetKilos] = useState(false);
   const [setKilosValues, setSetKilosValues] = useState([]);
+  const isMobile = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
 
   useEffect(() => {
     setReps(existing?.reps !== undefined ? String(existing.reps) : '');
@@ -101,21 +102,44 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
       <span className="food-name">{ex.exercise}</span>
       <span className="ingredient-sub">Target: {ex.targetReps} reps × {ex.targetSets} sets</span>
       <div >
-        <div className="gym-log-fields">
-          <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
-          {!useSetKilos && (
-              <NumberInput placeholder="Kilos" step="0.5" min="0" inputMode="decimal" value={kilos} onChange={setKilos} />
-          )}
-          <NumberInput placeholder="Sets" step="1" min="0" value={sets} onChange={handleSetsChange} />
-          <Button onClick={handleSave}>{existing ? 'Update' : 'Log'}</Button>
+        {isMobile && (
+            <>
+              <div className="gym-log-fields">
+                <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
+                {!useSetKilos && (
+                    <NumberInput placeholder="Kilos" step="0.5" min="0" inputMode="decimal" value={kilos} onChange={setKilos} />
+                )}
+                <NumberInput placeholder="Sets" step="1" min="0" value={sets} onChange={handleSetsChange} />
+              </div>
+              <div className="gym-log-fields-mobile">
+                <Checkbox
+                    checked={useSetKilos}
+                    onChange={handleToggleSetKilos}
+                    label="Different weight per set"
+                />
+                <Button onClick={handleSave}>{existing ? 'Update' : 'Log'}</Button>
+              </div>
+            </>
+        )}
+        {!isMobile && (
+            <>
+              <div className="gym-log-fields">
+                <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
+                {!useSetKilos && (
+                    <NumberInput placeholder="Kilos" step="0.5" min="0" inputMode="decimal" value={kilos} onChange={setKilos} />
+                )}
+                <NumberInput placeholder="Sets" step="1" min="0" value={sets} onChange={handleSetsChange} />
+                <Button onClick={handleSave}>{existing ? 'Update' : 'Log'}</Button>
+              </div>
 
-        </div>
+              <Checkbox
+                  checked={useSetKilos}
+                  onChange={handleToggleSetKilos}
+                  label="Different weight per set"
+              />
+            </>
+        )}
 
-        <Checkbox
-          checked={useSetKilos}
-          onChange={handleToggleSetKilos}
-          label="Different weight per set"
-        />
         {useSetKilos && (
           <div className="gym-set-kilos-fields">
             {setKilosValues.map((value, i) => (

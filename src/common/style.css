@@ -224,6 +224,7 @@ main {
 
 .range-toggle {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
 
@@ -539,6 +540,12 @@ label {
   margin-bottom: 0.5rem;
 }
 
+.gym-log-list .gym-log-fields-mobile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .gym-log-list .gym-log-fields input {
   flex: 1 1 70px;
   min-width: 0;
@@ -563,6 +570,7 @@ label {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 0.5rem;
+  margin-top: 5px;
 }
 
 .gym-set-kilos-fields[hidden] {
@@ -820,4 +828,10 @@ tfoot th {
   font-weight: 600;
   color: #f3f4f6;
   letter-spacing: 0.02em;
+}
+
+@media (max-width: 560px) {
+  .ingredient-grid {
+    grid-template-columns: 1fr;
+  }
 }
