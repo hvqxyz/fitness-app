@@ -83,8 +83,8 @@ export function LineChart({
         borderWidth: 3,
         tension: 0.35,
 
-        pointRadius: 3,
-        pointHoverRadius: 5,
+        pointRadius: 1,
+        pointHoverRadius: 2,
 
         pointBackgroundColor: secondColor,
         pointBorderWidth: 0,

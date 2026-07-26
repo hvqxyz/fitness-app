@@ -176,7 +176,7 @@ export function MeasurementsPage() {
           datasetLabel={metricLabel}
           formatAverageLabel={(avg) => `Average (${avg.toFixed(1)} cm)`}
           secondValues={weightValues}
-          secondColor={isDarkMode ? '#e5a13d' : '#c97a1a'}
+          secondColor="rgba(255,255,255,.25)"
           secondDatasetLabel="Weight (kg)"
         />
       </Card>
