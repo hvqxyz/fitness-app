@@ -5,6 +5,7 @@ import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { StackedBarChart } from '../components/charts/StackedBarChart.jsx';
 import { FoodList } from '../components/lists/FoodList.jsx';
 import { Button } from '../components/buttons/Button.jsx';
+import { Card } from '../components/Card.jsx';
 import { RunningSection } from './workouts/RunningSection.jsx';
 import { GymSection } from './workouts/GymSection.jsx';
 import { OtherSection } from './workouts/OtherSection.jsx';
@@ -87,8 +88,7 @@ export function WorkoutsPage() {
     <>
       <DateCarousel selectedDate={selectedDate} onChange={handleDateChange} />
       <div className="card-chart">
-        <section className="card">
-          <h2>Calories by activity</h2>
+        <Card title="Calories by activity">
           {loading ? (
               <div className="chart-wrap">
                 <p className="chart-loading">Loading…</p>
@@ -100,7 +100,7 @@ export function WorkoutsPage() {
                   yAxisLabel="kcal"
               />
           )}
-        </section>
+        </Card>
 
         <section className="range-toggle">
           {TYPES.map((type) => (
@@ -110,10 +110,9 @@ export function WorkoutsPage() {
           ))}
         </section>
 
-        <section className="card">
-          <h2>Activities</h2>
+        <Card title="Activities">
           <FoodList items={workoutListItems(workouts, selectedDate, { onDelete: handleDeleteWorkout })} />
-        </section>
+        </Card>
 
         {activeType === 'Running' && (
             <RunningSection workouts={workouts} selectedDate={selectedDate} onSaved={refresh} onError={reportError} />

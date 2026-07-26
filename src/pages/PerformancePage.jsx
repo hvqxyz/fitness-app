@@ -17,6 +17,7 @@ import {
   bmiCategory,
 } from '../common/storage.js';
 import { WeekCarousel } from '../components/nav/WeekCarousel.jsx';
+import { Card } from '../components/Card.jsx';
 import { LineChart } from '../components/charts/LineChart.jsx';
 
 function formatWeekStartLabel(key) {
@@ -131,8 +132,7 @@ export function PerformancePage() {
         </div>
       </section>
 
-      <section className="card">
-        <h2>Weekly Weight Trend</h2>
+      <Card title="Weekly Weight Trend">
         <LineChart
           labels={weightPoints.map((p) => formatWeekStartLabel(p.x))}
           values={weightPoints.map((p) => p.avgWeight)}
@@ -140,7 +140,7 @@ export function PerformancePage() {
           datasetLabel="Avg weight (kg)"
           formatAverageLabel={(avg) => `Average (${avg.toFixed(1)} kg)`}
         />
-      </section>
+      </Card>
 
       <section>
         <div className="stat-grid-title"><p>Demand (previous week)</p></div>
@@ -180,8 +180,7 @@ export function PerformancePage() {
         </div>
       </section>
 
-      <section className="card">
-        <h2>Calorie Demand</h2>
+      <Card title="Calorie Demand">
         <div className="range-toggle">
           <button
             type="button"
@@ -235,7 +234,7 @@ export function PerformancePage() {
           // (the toggle exists, but nothing was ever built for this panel).
           <div></div>
         )}
-      </section>
+      </Card>
     </>
   );
 }

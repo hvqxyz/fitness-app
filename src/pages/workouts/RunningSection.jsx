@@ -7,6 +7,7 @@ import {
   decimalMinutesToPaceLabel,
 } from '../../common/storage.js';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
+import { Card } from '../../components/Card.jsx';
 import { Tabs } from '../../components/nav/Tabs.jsx';
 import { LineChart } from '../../components/charts/LineChart.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
@@ -96,8 +97,7 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
       </div>
 
       {view === 'Tracker' && (
-        <section className="card">
-          <h2>Running</h2>
+        <Card title="Running">
           <form className="inline-form" onSubmit={handleSubmit}>
             <div className="form-field">
               <label htmlFor="workout-distance-input">Distance (km)</label>
@@ -164,13 +164,11 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
               <Button type="submit">Save</Button>
             </div>
           </form>
-        </section>
+        </Card>
       )}
 
       {view === 'Analytics' && (
-        <section className="card">
-          <h2>Analytics</h2>
-
+        <Card title="Analytics">
           <div className="range-toggle" style={{ marginBottom: '10px' }}>
             {DAYS_OPTIONS.map((d) => (
               <button key={d} type="button" className="button range-btn" aria-pressed={days === d} onClick={() => setDays(d)}>
@@ -239,7 +237,7 @@ export function RunningSection({ workouts, selectedDate, onSaved, onError }) {
               formatAverageLabel={(avg) => `Average (${formatMetricValue(metric, avg)})`}
             />
           </div>
-        </section>
+        </Card>
       )}
     </div>
   );

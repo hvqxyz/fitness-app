@@ -3,6 +3,7 @@ import { addIngredient, deleteIngredient, getSpreadsheetUrl, SHEET_NAMES } from 
 import { SearchInput } from '../../components/inputs/SearchInput.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { IngredientModal } from './IngredientModal.jsx';
 import { FitatuImportModal } from './FitatuImportModal.jsx';
 
@@ -101,8 +102,7 @@ export function FoodDatabaseSection({ ingredients, onSaved }) {
 
   return (
     <div>
-      <section className="card">
-        <h2>Food Database</h2>
+      <Card title="Food Database">
         <form className="ingredient-form" onSubmit={handleSubmit}>
           <div className="form-field">
             <label htmlFor="ingredient-name-input">Food name</label>
@@ -161,7 +161,7 @@ export function FoodDatabaseSection({ ingredients, onSaved }) {
             Import from fitatu
           </Button>
         </div>
-      </section>
+      </Card>
 
       <IngredientModal ingredient={modalIngredient} onClose={() => setModalIngredient(null)} onDelete={handleDelete} />
       <FitatuImportModal open={fitatuModalOpen} onClose={() => setFitatuModalOpen(false)} onImport={handleFitatuImport} />

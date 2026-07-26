@@ -1,11 +1,12 @@
 import { GOOGLE_CLIENT_ID } from './config.js';
 
-const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const SCOPE = 'https://www.googleapis.com/auth/drive.file openid profile';
 const SESSION_KEY = 'fitness-counter-google-token';
 
 let tokenClient = null;
 let accessToken = null;
 let tokenExpiry = 0;
+let userProfile = null;
 
 function loadFromSession() {
   const raw = sessionStorage.getItem(SESSION_KEY);
@@ -71,5 +72,25 @@ export function signOut() {
   }
   accessToken = null;
   tokenExpiry = 0;
+  userProfile = null;
   sessionStorage.removeItem(SESSION_KEY);
+}
+
+/**
+ * The signed-in user's Google name/email/picture, via the OpenID userinfo
+ * endpoint (needs the "openid profile" scope on top of the Drive scope).
+ * Fetched once per session and cached in memory.
+ */
+export async function getUserProfile() {
+  if (userProfile) return userProfile;
+
+  const token = await getAccessToken();
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Couldn't load Google profile (${res.status})`);
+
+  const { name, email, picture } = await res.json();
+  userProfile = { name, email, picture };
+  return userProfile;
 }

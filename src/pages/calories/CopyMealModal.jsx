@@ -1,19 +1,11 @@
-import { useEffect, useRef } from 'react';
 import { MEAL_TYPES } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Modal } from '../../components/Modal.jsx';
+import './CopyMealModal.css'
 
 export function CopyMealModal({ open, sourceMeal, date, mealType, message, submitting, onDateChange, onMealChangeType, onSubmit, onCancel }) {
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
-
   return (
-    <dialog className="ingredient-modal" ref={dialogRef} onCancel={onCancel}>
+    <Modal open={open} onClose={onCancel}>
       <form className="copy-meal-form" onSubmit={onSubmit}>
         <h3>Copy {sourceMeal}</h3>
         <label>
@@ -29,11 +21,11 @@ export function CopyMealModal({ open, sourceMeal, date, mealType, message, submi
           </select>
         </label>
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
-        <div className="ingredient-modal-actions">
+        <div className="app-modal-actions">
           <Button type="submit" disabled={submitting}>Copy</Button>
           <Button variant="secondary" onClick={onCancel}>Cancel</Button>
         </div>
       </form>
-    </dialog>
+    </Modal>
   );
 }

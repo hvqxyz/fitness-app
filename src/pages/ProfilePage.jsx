@@ -19,8 +19,6 @@ import { TargetsSection } from './profile/TargetsSection.jsx';
 import { FoodDatabaseSection } from './profile/FoodDatabaseSection.jsx';
 import { GymTemplatesSection } from './profile/GymTemplatesSection.jsx';
 import { BackupSection } from './profile/BackupSection.jsx';
-import { Tabs } from '../components/nav/Tabs.jsx';
-
 
 const VIEWS = ['Targets', 'Food', 'Gym'];
 const VIEW_LABELS = { Targets: 'Targets and History', Food: 'Food Database', Gym: 'Gym Templates and Exercises' };

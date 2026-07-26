@@ -17,6 +17,7 @@ import {
 import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { NumberInput } from '../components/inputs/NumberInput.jsx';
 import { Button } from '../components/buttons/Button.jsx';
+import { Card } from '../components/Card.jsx';
 import { LineChart } from '../components/charts/LineChart.jsx';
 
 function formatTrend(trend) {
@@ -96,8 +97,7 @@ export function WeightPage() {
     <>
       <DateCarousel selectedDate={selectedDate} onChange={handleDateChange} />
 
-      <section className="card">
-        <h2>Weight</h2>
+      <Card title="Weight">
           <form className="row" onSubmit={handleSubmit}>
             <NumberInput
                 placeholder="Kg"
@@ -113,7 +113,7 @@ export function WeightPage() {
                 <p className={`message ${syncMessage.type}`.trim()} role="status">{syncMessage.text}</p>
             )}
           </form>
-      </section>
+      </Card>
 
       <section className="stat-grid">
         <div className="stat-tile">
@@ -135,8 +135,7 @@ export function WeightPage() {
         </div>
       </section>
 
-      <section className="card card-chart">
-        <h2>Weight over time</h2>
+      <Card title="Weight over time">
         <div className="range-toggle">
           {RANGE_OPTIONS.map((days) => (
             <button
@@ -157,7 +156,7 @@ export function WeightPage() {
           datasetLabel="Weight (kg)"
           formatAverageLabel={(avg) => `Average (${avg.toFixed(1)} kg)`}
         />
-      </section>
+      </Card>
     </>
   );
 }

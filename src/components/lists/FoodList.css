@@ -1,7 +1,3 @@
-.food-item-list-container {
-  margin-top: 1rem;
-}
-
 .food-item-list-card {
   border: 1px solid var(--gridline);
   border-radius: 16px;

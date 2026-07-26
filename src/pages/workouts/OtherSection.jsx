@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { addWorkout } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { TextInput } from '../../components/inputs/TextInput.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 
@@ -28,8 +29,7 @@ export function OtherSection({ selectedDate, onSaved, onError }) {
   }
 
   return (
-    <section className="card" style={{ marginTop: '10px' }}>
-      <h2>Other</h2>
+    <Card title="Other" style={{ marginTop: '10px' }}>
       <form className="inline-form" onSubmit={handleSubmit}>
         <div className="form-field">
           <label htmlFor="other-note-input">Note</label>
@@ -56,6 +56,6 @@ export function OtherSection({ selectedDate, onSaved, onError }) {
           <Button type="submit">Save</Button>
         </div>
       </form>
-    </section>
+    </Card>
   );
 }

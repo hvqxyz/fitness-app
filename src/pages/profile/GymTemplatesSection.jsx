@@ -3,6 +3,7 @@ import { addExercise, deleteExercise, addGymExercise, deleteGymExercise, addGymT
 import { SearchInput } from '../../components/inputs/SearchInput.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { FoodList } from '../../components/lists/FoodList.jsx';
 
 export function GymTemplatesSection({ exerciseCatalog, gymExercises, gymTemplates, onExerciseCatalogChanged, onGymExercisesChanged, onGymTemplatesChanged }) {
@@ -117,9 +118,8 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, gymTemplate
   const templateExercises = gymExercises.filter((ex) => ex.template === activeTemplate);
 
   return (
-    <div>
-      <section className="card">
-        <h2>Gym Exercises</h2>
+    <div className="card-wrapper">
+      <Card title="Gym Exercises">
         <form className="inline-form" onSubmit={handleAddExercise}>
           <SearchInput
             searchable={false}
@@ -139,10 +139,9 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, gymTemplate
           }))}
         />
         {exerciseMessage.text && <p className={`message ${exerciseMessage.type}`.trim()} role="status">{exerciseMessage.text}</p>}
-      </section>
+      </Card>
 
-      <section className="card">
-        <h2>Gym Templates</h2>
+      <Card title="Gym Templates">
         <form className="inline-form" onSubmit={handleAddTemplate}>
           <SearchInput
             searchable={false}
@@ -201,7 +200,7 @@ export function GymTemplatesSection({ exerciseCatalog, gymExercises, gymTemplate
             {gymExerciseMessage.text && <p className={`message ${gymExerciseMessage.type}`.trim()} role="status">{gymExerciseMessage.text}</p>}
           </>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

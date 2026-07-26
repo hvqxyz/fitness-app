@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { saveTargets, deleteTargetsHistoryEntry, startOfWeek, todayKey } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 
 export function TargetsOnlyView({ profile, targetsHistory, onSaved }) {
@@ -53,8 +54,7 @@ export function TargetsOnlyView({ profile, targetsHistory, onSaved }) {
 
   return (
     <div>
-      <section className="card" style={{ marginTop: '10px' }}>
-        <h2>Targets</h2>
+      <Card title="Targets" style={{ marginTop: '10px' }}>
         <form className="ingredient-form" onSubmit={handleSubmit}>
           <NumberInput
             placeholder="Target calories / day"
@@ -83,7 +83,7 @@ export function TargetsOnlyView({ profile, targetsHistory, onSaved }) {
             </li>
           ))}
         </ul>
-      </section>
+      </Card>
     </div>
   );
 }

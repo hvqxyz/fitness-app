@@ -23,6 +23,7 @@ import {
 } from '../common/storage.js';
 import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { WeekCarousel } from '../components/nav/WeekCarousel.jsx';
+import { Card } from '../components/Card.jsx';
 import { ProgressBar } from '../components/charts/ProgressBar.jsx';
 import { MacroRingItem } from '../components/charts/MacroRingItem.jsx';
 import { Tabs } from '../components/nav/Tabs.jsx';
@@ -191,7 +192,7 @@ export function CaloriesPage() {
 
       {view === 'Tracker' && (
         <div className="calorie-progress-tile">
-          <section className="card card-chart">
+          <Card>
             {loading ? (
               // Same shape as the loaded state below (ProgressBar + 3 rings) so this
               // card doesn't resize once real data arrives — only the values change.
@@ -241,7 +242,7 @@ export function CaloriesPage() {
               </>
             )}
             {syncMessage.text && <p className={`message ${syncMessage.type}`.trim()} role="status">{syncMessage.text}</p>}
-          </section>
+          </Card>
 
           <div id="meal-sections">
             {MEAL_TYPES.map((meal) => {
@@ -296,8 +297,7 @@ export function CaloriesPage() {
 
       {view === 'Analytics' && (
         <div id="calories-analytics-view">
-          <section className="card">
-            <h2>Calories over time</h2>
+          <Card title="Calories over time">
             <div className="range-toggle">
               {CHART_RANGE_OPTIONS.map((days) => (
                 <button
@@ -319,10 +319,9 @@ export function CaloriesPage() {
               formatAverageLabel={(avg) => `Average (${Math.round(avg)} kcal)`}
               className="calories-chart-wrap"
             />
-          </section>
+          </Card>
 
-          <section className="card" style={{ marginTop: '10px' }}>
-            <h2>Analytics by week</h2>
+          <Card title="Analytics by week" style={{ marginTop: '10px' }}>
             <WeekCarousel selectedWeek={selectedWeek} onChange={handleWeekChange} />
 
             {weekStats && WEEK_MACRO_CONFIGS.map((cfg) => {
@@ -347,7 +346,7 @@ export function CaloriesPage() {
                 </div>
               );
             })}
-          </section>
+          </Card>
         </div>
       )}
     </>

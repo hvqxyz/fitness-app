@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { saveActivitySettings, deleteActivityHistoryEntry, latestActivityHistory, computeBmr, startOfWeek, todayKey } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Tabs } from '../../components/nav/Tabs.jsx';
 import { FoodList } from '../../components/lists/FoodList.jsx';
@@ -74,8 +75,7 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: '10px' }}>
-        <h2>Activity Factor</h2>
+      <Card title="Activity Factor" style={{ marginTop: '10px' }}>
         <form className="ingredient-form" onSubmit={handleSubmit}>
           <NumberInput
             placeholder="Activity multiplier"
@@ -118,7 +118,7 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
             onRemove: () => handleDelete(entry),
           }))}
         />
-      </section>
+      </Card>
 
       <section className="stat-grid" style={{ marginTop: '10px' }}>
         <div className="stat-tile">

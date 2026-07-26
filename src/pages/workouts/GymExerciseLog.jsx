@@ -3,6 +3,7 @@ import { addWorkout, deleteWorkout } from '../../common/storage.js';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { Checkbox } from '../../components/inputs/Checkbox.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import './GymExerciseLog.css'
 
 function findGymExerciseEntry(workouts, selectedDate, gymTemplate, exercise) {
   return workouts.find(

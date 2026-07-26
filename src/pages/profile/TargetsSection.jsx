@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { saveProfile } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { Tabs } from '../../components/nav/Tabs.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 import { ActivityFactorView } from './ActivityFactorView.jsx';
@@ -33,8 +34,7 @@ export function TargetsSection({ profile, prevWeekAvgWeight, targetsHistory, act
 
   return (
     <div>
-      <section className="card">
-        <h2>Profile</h2>
+      <Card title="Profile">
         <form className="inline-form" onSubmit={handleSubmit}>
           <div className="form-field">
             <label htmlFor="profile-age-input">Age</label>
@@ -49,7 +49,7 @@ export function TargetsSection({ profile, prevWeekAvgWeight, targetsHistory, act
           <Button type="submit">Save profile</Button>
         </form>
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
-      </section>
+      </Card>
 
       <div className="range-toggle" style={{ marginTop: '10px' }}>
         <button type="button" className="button range-btn" aria-pressed={view === 'Activity'} onClick={() => setView('Activity')}>Activity Factor</button>

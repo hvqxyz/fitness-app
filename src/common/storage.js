@@ -128,8 +128,33 @@ export function startOfWeek(dateKey) {
   return shiftDateKey(dateKey, diff);
 }
 
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * A read-through cache for a Sheets fetch that rarely changes: repeated
+ * reads within CACHE_TTL_MS reuse the last result instead of re-fetching,
+ * and callers that write the underlying sheet call .invalidate() so the
+ * next .get() is immediately fresh rather than waiting out the TTL.
+ */
+function createTtlCache(fetchFn) {
+  let cache = null; // { data, timestamp }
+  return {
+    async get() {
+      if (cache && Date.now() - cache.timestamp < CACHE_TTL_MS) return cache.data;
+      const data = await fetchFn();
+      cache = { data, timestamp: Date.now() };
+      return data;
+    },
+    invalidate() {
+      cache = null;
+    },
+  };
+}
+
+const profileCache = createTtlCache(fetchProfile);
+
 export async function getProfile() {
-  return fetchProfile();
+  return profileCache.get();
 }
 
 export async function getSpreadsheetUrl(sheetName) {
@@ -142,6 +167,7 @@ export async function getSpreadsheetUrl(sheetName) {
 
 export async function saveProfile(age, heightCm) {
   await putProfile(age, heightCm);
+  profileCache.invalidate();
 }
 
 export async function saveTargets(
@@ -152,6 +178,7 @@ export async function saveTargets(
   const existing = history.find((entry) => entry.date === weekStart);
   await putTargets(targetKcal, proteinPercent, carbsPercent, fatPercent);
   await putTargetsHistoryRow(existing?._row, weekStart, targetKcal, proteinPercent, carbsPercent, fatPercent);
+  profileCache.invalidate();
 }
 
 export async function saveActivitySettings(activityMultiplier, dailyDeficit, goalType, rateKgPerWeek) {
@@ -487,16 +514,20 @@ export async function deleteWorkouts(rows) {
  * Gym exercises are grouped by which template they belong to (see
  * getGymTemplates()), e.g. { template: 'Training A', exercise: 'Bench Press', targetReps, targetSets }.
  */
+const gymExercisesCache = createTtlCache(fetchGymExercises);
+
 export async function getGymExercises() {
-  return fetchGymExercises();
+  return gymExercisesCache.get();
 }
 
 export async function addGymExercise(exercise) {
   await appendGymExerciseRow(exercise);
+  gymExercisesCache.invalidate();
 }
 
 export async function deleteGymExercise(row) {
   await deleteRows(SHEET_NAMES.GYM_EXERCISES, [row]);
+  gymExercisesCache.invalidate();
 }
 
 /**
@@ -519,16 +550,20 @@ export async function deleteExercise(row) {
  * The user-editable list of gym templates (e.g. "Training A", "Training B"),
  * managed on Profile — used to group gym exercises and tag gym workouts.
  */
+const gymTemplatesCache = createTtlCache(fetchGymTemplates);
+
 export async function getGymTemplates() {
-  return fetchGymTemplates();
+  return gymTemplatesCache.get();
 }
 
 export async function addGymTemplate(name) {
   await appendGymTemplateRow(name);
+  gymTemplatesCache.invalidate();
 }
 
 export async function deleteGymTemplate(row) {
   await deleteRows(SHEET_NAMES.GYM_TEMPLATES, [row]);
+  gymTemplatesCache.invalidate();
 }
 
 /**
@@ -860,9 +895,20 @@ export function weeklyCalorieDemandAverageRow(rows) {
   };
 }
 
+/**
+ * fetchEntries() combines the Weight and Food sheets in one batchGet, so
+ * loadData() caches that combined result (see createTtlCache above). Any
+ * mutation to either sheet (upsertWeight/addFood/deleteFood/deleteDay/
+ * applyImportedData) invalidates it immediately so the next loadData() call
+ * is fresh.
+ */
+const entriesCache = createTtlCache(async () => ({
+  version: CURRENT_VERSION,
+  entries: await fetchEntries(),
+}));
+
 export async function loadData() {
-  const entries = await fetchEntries();
-  return { version: CURRENT_VERSION, entries };
+  return entriesCache.get();
 }
 
 export async function upsertWeight(date, weightKg) {
@@ -873,6 +919,7 @@ export async function upsertWeight(date, weightKg) {
   } else {
     await appendWeightRow(date, weightKg);
   }
+  entriesCache.invalidate();
 }
 
 /**
@@ -880,6 +927,7 @@ export async function upsertWeight(date, weightKg) {
  */
 export async function addFood(date, entry) {
   await appendFoodRow(date, entry);
+  entriesCache.invalidate();
 }
 
 export async function deleteFood(date, index) {
@@ -887,6 +935,7 @@ export async function deleteFood(date, index) {
   const food = entries[date]?.foods?.[index];
   if (!food) return;
   await deleteRows(SHEET_NAMES.FOOD, [food._row]);
+  entriesCache.invalidate();
 }
 
 export async function deleteDay(date) {
@@ -898,6 +947,7 @@ export async function deleteDay(date) {
   if (entry._weightRow) {
     await deleteRows(SHEET_NAMES.WEIGHT, [entry._weightRow]);
   }
+  entriesCache.invalidate();
 }
 
 export async function exportToFile() {
@@ -1012,4 +1062,5 @@ export async function applyImportedData(data) {
   }
   await clearAndWrite(SHEET_NAMES.WEIGHT, 2, weightRows);
   await clearAndWrite(SHEET_NAMES.FOOD, 10, foodRows);
+  entriesCache.invalidate();
 }

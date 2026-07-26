@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { exportToFile, parseImportFile, applyImportedData } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 
 export function BackupSection() {
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -34,14 +35,13 @@ export function BackupSection() {
   }
 
   return (
-    <section className="card">
-      <h2>Backup</h2>
+    <Card title="Backup">
       <div className="inline-form">
         <Button onClick={handleExport}>Export data</Button>
         <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Import data</Button>
         <input type="file" accept="application/json" hidden ref={fileInputRef} onChange={handleImportFile} />
       </div>
       {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
-    </section>
+    </Card>
   );
 }

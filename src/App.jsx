@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { getUserProfile } from './common/auth.js';
+import { Button } from './components/buttons/Button.jsx';
 import { SignInGate } from './components/SignInGate.jsx';
 import { WeightPage } from './pages/WeightPage.jsx';
 import { CaloriesPage } from './pages/CaloriesPage.jsx';
@@ -23,24 +25,33 @@ const PAGES = {
 
 function App() {
   const [page, setPage] = useState('Weight');
+  const [avatarInitial, setAvatarInitial] = useState(null);
   const Page = PAGES[page];
+
+  const handleSignIn = useCallback(() => {
+    getUserProfile()
+      .then((profile) => setAvatarInitial(profile.name?.trim().charAt(0).toUpperCase() || null))
+      .catch(() => setAvatarInitial(null));
+  }, []);
 
   return (
     <>
       <header className="app-header">
         <h1>Fitness Counter</h1>
-        <button
-          type="button"
+        <Button
           className="profile-avatar-link"
           aria-label="Profile"
-          style={{ border: 'none', padding: 0, cursor: 'pointer' }}
           onClick={() => setPage('Profile')}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="4"></circle>
-            <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
-          </svg>
-        </button>
+          {avatarInitial ? (
+            <span className="profile-avatar-initial">{avatarInitial}</span>
+          ) : (
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
+            </svg>
+          )}
+        </Button>
       </header>
       <nav className="tabs" role="tablist">
         {TABS.map((name) => (
@@ -57,7 +68,7 @@ function App() {
         ))}
       </nav>
       <main>
-        <SignInGate>
+        <SignInGate onSignIn={handleSignIn}>
           <Page />
         </SignInGate>
       </main>

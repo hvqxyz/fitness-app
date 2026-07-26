@@ -5,6 +5,7 @@ import { ChartCanvas } from '../../components/ChartCanvas.jsx';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
 import { GymExerciseLog } from './GymExerciseLog.jsx';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Card } from '../../components/Card.jsx';
 import { Select } from '../../components/inputs/Select.jsx';
 import { NumberInput } from '../../components/inputs/NumberInput.jsx';
 
@@ -67,8 +68,7 @@ export function GymSection({ workouts, gymExercises, gymTemplates, selectedDate,
       </div>
 
       {view === 'Tracker' && (
-        <section className="card">
-          <h2>Gym</h2>
+        <Card title="Gym">
           <Select value={activeTemplate} onChange={setActiveTemplate} options={gymTemplates.map((t) => t.name)} />
 
           <GymExerciseLog
@@ -94,12 +94,11 @@ export function GymSection({ workouts, gymExercises, gymTemplates, selectedDate,
             </div>
             <Button onClick={handleSaveSessionCalories}>Save calories</Button>
           </div>
-        </section>
+        </Card>
       )}
 
       {view === 'Analytics' && (
-        <section className="card">
-          <h2>Analytics</h2>
+        <Card title="Analytics">
           <Select value={analyticsExercise} onChange={setAnalyticsExercise} options={templateExercises.map((ex) => ex.exercise)} />
 
           <div className="range-toggle" style={{ paddingTop: '10px' }}>
@@ -125,7 +124,7 @@ export function GymSection({ workouts, gymExercises, gymTemplates, selectedDate,
                 />
               </div>
 
-              <h2>Strength progress</h2>
+              <h3>Strength progress</h3>
 
               <div className="range-toggle" style={{ marginBottom: '15px', marginTop: '15px' }}>
                 <button type="button" className="button range-btn" aria-pressed={kilosTrendMode === 'avg'} onClick={() => setKilosTrendMode('avg')}>Avg</button>
@@ -142,7 +141,7 @@ export function GymSection({ workouts, gymExercises, gymTemplates, selectedDate,
               </div>
             </>
           )}
-        </section>
+        </Card>
       )}
     </div>
   );

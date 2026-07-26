@@ -13,6 +13,7 @@ import {
 import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { NumberInput } from '../components/inputs/NumberInput.jsx';
 import { Button } from '../components/buttons/Button.jsx';
+import { Card } from '../components/Card.jsx';
 import { LineChart } from '../components/charts/LineChart.jsx';
 import { FoodList } from '../components/lists/FoodList.jsx';
 
@@ -124,8 +125,7 @@ export function MeasurementsPage() {
     <>
       <DateCarousel selectedDate={selectedDate} onChange={handleDateChange} />
 
-      <section className="card">
-        <h2>Measurements</h2>
+      <Card title="Measurements">
         <form className="ingredient-form" onSubmit={handleSubmit}>
           <div className="ingredient-grid">
             {FIELDS.map((f) => (
@@ -146,10 +146,9 @@ export function MeasurementsPage() {
           <Button type="submit">Save</Button>
         </form>
         {syncMessage.text && <p className={`message ${syncMessage.type}`.trim()} role="status">{syncMessage.text}</p>}
-      </section>
+      </Card>
 
-      <section className="card card-chart">
-        <h2>{metricLabel} over time</h2>
+      <Card title={`${metricLabel} over time`}>
         <div className="range-toggle" style={{ marginBottom: '10px' }}>
           {FIELDS.map((f) => (
             <button key={f.key} type="button" className="button range-btn" aria-pressed={metric === f.key} onClick={() => setMetric(f.key)}>
@@ -180,10 +179,9 @@ export function MeasurementsPage() {
           secondColor={isDarkMode ? '#e5a13d' : '#c97a1a'}
           secondDatasetLabel="Weight (kg)"
         />
-      </section>
+      </Card>
 
-      <section className="card">
-        <h3>History</h3>
+      <Card title='History'>
         <FoodList
           items={[...measurements].reverse().map((entry) => ({
             key: entry.date,
@@ -194,7 +192,7 @@ export function MeasurementsPage() {
             onRemove: () => handleDelete(entry),
           }))}
         />
-      </section>
+      </Card>
     </>
   );
 }

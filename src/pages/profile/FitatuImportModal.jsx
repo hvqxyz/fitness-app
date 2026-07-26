@@ -1,17 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseFitatuText } from '../../common/fitatu-import.js';
 import { Button } from '../../components/buttons/Button.jsx';
+import { Modal } from '../../components/Modal.jsx';
+import './FitatuImportModal.css'
 
 export function FitatuImportModal({ open, onClose, onImport }) {
-  const dialogRef = useRef(null);
   const [text, setText] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
     if (open) {
       setText('');
       setMessage({ text: '', type: '' });
@@ -30,7 +27,7 @@ export function FitatuImportModal({ open, onClose, onImport }) {
   }
 
   return (
-    <dialog className="ingredient-modal" ref={dialogRef} onCancel={onClose} onClick={(e) => { if (e.target === dialogRef.current) onClose(); }}>
+    <Modal open={open} onClose={onClose}>
       <h3>Import from fitatu.com</h3>
       <form onSubmit={handleSubmit}>
         <div className="form-field">
@@ -49,11 +46,11 @@ export function FitatuImportModal({ open, onClose, onImport }) {
           />
         </div>
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
-        <div className="ingredient-modal-actions" style={{ marginTop: '0.75rem' }}>
+        <div className="app-modal-actions" style={{ marginTop: '0.75rem' }}>
           <Button type="submit">Import</Button>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
         </div>
       </form>
-    </dialog>
+    </Modal>
   );
 }
