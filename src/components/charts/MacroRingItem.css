@@ -47,6 +47,10 @@
   stroke: #ef4444;
 }
 
+.macro-ring-progress-secondary {
+  opacity: 0.4;
+}
+
 .macro-ring-value {
   font-size: 1.05rem;
   font-weight: 600;

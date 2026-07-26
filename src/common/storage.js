@@ -661,12 +661,14 @@ export function dayMacros(entry) {
  */
 export function weeklyMacroStats(entries, weekStartKey, profile) {
   const dates = dateRangeInclusive(weekStartKey, shiftDateKey(weekStartKey, 6));
-  const actual = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  const actual = { calories: 0, protein: 0, carbs: 0, fat: 0, satFat: 0, unsatFat: 0 };
   dates.forEach((date) => {
     actual.calories += dayTotal(entries[date]);
     const macros = dayMacros(entries[date]);
     actual.protein += macros.protein;
     actual.carbs += macros.carbs;
+    actual.satFat += macros.satFat;
+    actual.unsatFat += macros.unsatFat;
     actual.fat += macros.satFat + macros.unsatFat;
   });
 
@@ -684,7 +686,11 @@ export function weeklyMacroStats(entries, weekStartKey, profile) {
     calories: buildStat(actual.calories, Number.isFinite(profile.targetKcal) ? profile.targetKcal : null),
     protein: buildStat(actual.protein, dailyTargets.proteinGrams),
     carbs: buildStat(actual.carbs, dailyTargets.carbsGrams),
-    fat: buildStat(actual.fat, dailyTargets.fatGrams),
+    fat: {
+      ...buildStat(actual.fat, dailyTargets.fatGrams),
+      actualSatFat: actual.satFat,
+      actualUnsatFat: actual.unsatFat,
+    },
   };
 }
 

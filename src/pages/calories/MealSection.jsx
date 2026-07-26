@@ -133,6 +133,7 @@ export function MealSection({ meal, foods, ingredients, hasFoods, totals, target
             <div className="meal-summary-grid">
               {MEAL_MACRO_CONFIGS.map(({ key, label, unit }) => {
                 const Icon = ICONS[key];
+                const isFat = key === 'fat';
 
                 const actual = totals[key] || 0;
                 const target = targets[key];
@@ -161,7 +162,8 @@ export function MealSection({ meal, foods, ingredients, hasFoods, totals, target
 
                       <ProgressBar
                           variant="compact"
-                          value={actual}
+                          value={isFat ? totals.unsatFat || 0 : actual}
+                          secondaryValue={isFat ? totals.satFat || 0 : undefined}
                           max={target}
                       />
                     </div>

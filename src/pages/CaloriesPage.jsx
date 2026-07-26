@@ -224,16 +224,15 @@ export function CaloriesPage() {
                     {MACRO_RING_CONFIGS.map((cfg) => {
                       const targetGrams = gramsTargets[cfg.gramsKey];
                       if (!targetGrams) return null;
-                      const actual = actualGrams[cfg.key];
-                      const percent = Math.round((actual / targetGrams) * 100);
+                      const isFat = cfg.key === 'fat';
                       return (
                         <MacroRingItem
                           key={cfg.key}
-                          value={actual}
+                          value={isFat ? macros.unsatFat : actualGrams[cfg.key]}
+                          secondaryValue={isFat ? macros.satFat : undefined}
                           max={targetGrams}
-                          label={`${Math.round(actual)}g`}
-                          sublabel={`of ${Math.round(targetGrams)}g (${percent}%)`}
                           title={cfg.label}
+                          tooltip={isFat ? `Saturated: ${Math.round(macros.satFat)}g · Unsaturated: ${Math.round(macros.unsatFat)}g` : undefined}
                         />
                       );
                     })}
@@ -252,10 +251,12 @@ export function CaloriesPage() {
                   acc.calories += Number(food.kcal) || 0;
                   acc.protein += Number(food.protein) || 0;
                   acc.carbs += Number(food.carbs) || 0;
+                  acc.satFat += Number(food.satFat) || 0;
+                  acc.unsatFat += Number(food.unsatFat) || 0;
                   acc.fat += (Number(food.satFat) || 0) + (Number(food.unsatFat) || 0);
                   return acc;
                 },
-                { calories: 0, protein: 0, carbs: 0, fat: 0 }
+                { calories: 0, protein: 0, carbs: 0, fat: 0, satFat: 0, unsatFat: 0 }
               );
               const mealTargets = {
                 calories: targets.targetKcal || null,
@@ -325,7 +326,8 @@ export function CaloriesPage() {
             <WeekCarousel selectedWeek={selectedWeek} onChange={handleWeekChange} />
 
             {weekStats && WEEK_MACRO_CONFIGS.map((cfg) => {
-              const { actual, target, avgActual, avgTarget } = weekStats[cfg.key];
+              const { actual, target, avgActual, avgTarget, actualSatFat, actualUnsatFat } = weekStats[cfg.key];
+              const isFat = cfg.key === 'fat';
               const percent = target ? Math.round((actual / target) * 100) : 0;
               const label = target !== null
                 ? `total ${Math.round(actual)} of ${Math.round(target)} ${cfg.unit} (${percent}%)`
@@ -337,7 +339,8 @@ export function CaloriesPage() {
                 <div className="week-macro-item" key={cfg.key}>
                   <ProgressBar
                     title={cfg.label}
-                    value={actual}
+                    value={isFat ? actualUnsatFat : actual}
+                    secondaryValue={isFat ? actualSatFat : undefined}
                     max={target ?? 0}
                     variant="compact"
                     label={label}

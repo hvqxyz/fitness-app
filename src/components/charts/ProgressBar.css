@@ -51,6 +51,10 @@
   background: var(--critical);
 }
 
+.progress-bar-chart-fill-secondary {
+  opacity: 0.4;
+}
+
 @media (max-width: 480px) {
   .progress-bar-label-value {
     display: flex;

@@ -6,16 +6,33 @@ import './ProgressBar.css';
  * canvas ring. Fill is capped visually at 100% once value exceeds max,
  * switching to the critical color, same as ProgressRing.
  *
+ * `secondaryValue` (optional) stacks an extra amount after `value` on the
+ * same bar, same color, drawn underneath the primary fill at lower opacity —
+ * e.g. unsaturated fat layered behind saturated fat. The "over max" check
+ * uses the combined total.
+ *
  * variant: 'stacked' (thicker track, label centered below — the daily/weekly
  * totals bars) | 'compact' (thinner track, a title/value head row above —
  * the 2x2 per-meal macro grid).
  */
-export function ProgressBar({ value, max, title, label, secondaryLabel, variant = 'stacked' }) {
+export function ProgressBar({ value, secondaryValue = 0, max, title, label, secondaryLabel, variant = 'stacked' }) {
+  const total = value + secondaryValue;
   const percent = max ? Math.round((value / max) * 100) : 0;
-  const over = Boolean(max) && value > max;
+  const totalPercent = max ? Math.round((total / max) * 100) : 0;
+  const over = Boolean(max) && total > max;
   const fillClass = `progress-bar-chart-fill${over ? ' over' : ''}`;
   const fillStyle = { width: `${Math.min(percent, 100)}%` };
+  const secondaryFillStyle = { width: `${Math.min(totalPercent, 100)}%` };
   const isMobile = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
+
+  const track = (trackClassName) => (
+    <div className={trackClassName}>
+      {secondaryValue > 0 && (
+        <div className={`${fillClass} progress-bar-chart-fill-secondary`} style={secondaryFillStyle}></div>
+      )}
+      <div className={fillClass} style={fillStyle}></div>
+    </div>
+  );
 
   if (variant === 'compact') {
     return (
@@ -37,18 +54,14 @@ export function ProgressBar({ value, max, title, label, secondaryLabel, variant 
                 </div>
             )}
         </div>
-        <div className="progress-bar-chart-track progress-bar-chart-track-compact">
-          <div className={fillClass} style={fillStyle}></div>
-        </div>
+        {track('progress-bar-chart-track progress-bar-chart-track-compact')}
       </div>
     );
   }
 
   return (
     <div className="progress-bar-chart progress-bar-chart-stacked">
-      <div className="progress-bar-chart-track">
-        <div className={fillClass} style={fillStyle}></div>
-      </div>
+      {track('progress-bar-chart-track')}
       {label && <p className="progress-bar-chart-label">{label}</p>}
     </div>
   );
