@@ -44,6 +44,11 @@ body {
   gap: 1rem;
 }
 
+.row {
+  display: flex;
+  gap: 12px;
+}
+
 /*
  * Base look for every <button> in the app. Declared early, before any
  * component-specific button class (.tab-btn, .range-btn, .date-nav,
@@ -120,18 +125,6 @@ main {
   display: flex;
   gap: 0.75rem;
   flex-direction: column;
-}
-
-.meal-heading-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.meal-heading-row h2 {
-  margin: 0;
 }
 
 .meal-copy-btn {
@@ -356,11 +349,7 @@ label {
   align-items: flex-start;
 }
 
-.row {
-  display: flex;
-  gap: 12px;
-  flex: 1 1 160px;
-}
+
 
 .food-weight-row {
   display: flex;
