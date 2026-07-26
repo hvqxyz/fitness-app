@@ -1,6 +1,8 @@
 import { MEAL_TYPES } from '../../common/storage.js';
 import { Button } from '../../components/buttons/Button.jsx';
 import { Modal } from '../../components/Modal.jsx';
+import { DateInput } from '../../components/inputs/DateInput.jsx';
+import { Select } from '../../components/inputs/Select.jsx';
 import './CopyMealModal.css'
 
 export function CopyMealModal({ open, sourceMeal, date, mealType, message, submitting, onDateChange, onMealChangeType, onSubmit, onCancel }) {
@@ -10,15 +12,11 @@ export function CopyMealModal({ open, sourceMeal, date, mealType, message, submi
         <h3>Copy {sourceMeal}</h3>
         <label>
           Day
-          <input type="date" required value={date} onChange={(e) => onDateChange(e.target.value)} />
+          <DateInput required value={date} onChange={onDateChange} />
         </label>
         <label>
           Meal type
-          <select className="select-list" required value={mealType} onChange={(e) => onMealChangeType(e.target.value)}>
-            {MEAL_TYPES.map((meal) => (
-              <option key={meal} value={meal}>{meal}</option>
-            ))}
-          </select>
+          <Select required value={mealType} onChange={onMealChangeType} options={MEAL_TYPES} />
         </label>
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
         <div className="app-modal-actions">
