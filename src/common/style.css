@@ -49,6 +49,22 @@ body {
   gap: 12px;
 }
 
+.column {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.info-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
 /*
  * Base look for every <button> in the app. Declared early, before any
  * component-specific button class (.tab-btn, .range-btn, .date-nav,
@@ -168,11 +184,6 @@ main {
   flex-direction: column;
   justify-content: center;
   gap: 0.15rem;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
 }
 
 .stat-value {
@@ -338,11 +349,6 @@ label {
 
 .ingredient-grid input {
   width: 100%;
-}
-
-.ingredient-sub {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 
 .food-form {

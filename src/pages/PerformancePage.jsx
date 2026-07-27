@@ -114,20 +114,20 @@ export function PerformancePage() {
 
       <section className="stat-grid">
         <div className="stat-tile">
-          <div className="stat-label">Avg BMI</div>
+          <div className="label">Avg BMI</div>
           <div className="stat-value">{stats.avgBmi !== null ? stats.avgBmi.toFixed(1) : '—'}</div>
           <div className="stat-sub">{stats.avgBmi !== null ? bmiCategory(stats.avgBmi) || '' : ''}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">Avg weight</div>
+          <div className="label">Avg weight</div>
           <div className="stat-value">{stats.avgWeight !== null ? `${stats.avgWeight.toFixed(1)} kg` : '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">Weight trend</div>
+          <div className="label">Weight trend</div>
           <div className="stat-value">{formatTrend(stats.weightTrendDeltaKg)}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">Avg weight last week</div>
+          <div className="label">Avg weight last week</div>
           <div className="stat-value">{stats.prevAvgWeight !== null ? `${stats.prevAvgWeight.toFixed(1)} kg` : '—'}</div>
         </div>
       </section>
@@ -146,15 +146,15 @@ export function PerformancePage() {
         <div className="stat-grid-title"><p>Demand (previous week)</p></div>
         <div className="stat-grid">
           <div className="stat-tile">
-            <div className="stat-label">Avg weight</div>
+            <div className="label">Avg weight</div>
             <div className="stat-value">{lastAvgWeight !== null ? `${lastAvgWeight.toFixed(1)} kg` : '—'}</div>
           </div>
           <div className="stat-tile">
-            <div className="stat-label">BMR</div>
+            <div className="label">BMR</div>
             <div className="stat-value">{lastAvgWeightBmr !== null ? Math.round(lastAvgWeightBmr) : '—'}</div>
           </div>
           <div className="stat-tile">
-            <div className="stat-label">Demand</div>
+            <div className="label">Demand</div>
             <div className="stat-value">{lastAvgWeightDemand !== null ? Math.round(lastAvgWeightDemand) : '—'}</div>
           </div>
         </div>
@@ -164,13 +164,13 @@ export function PerformancePage() {
         <div className="stat-grid-title"><p>Week data</p></div>
         <div className="stat-grid">
           <div className="stat-tile">
-            <div className="stat-label">Target kcal</div>
+            <div className="label">Target kcal</div>
             <div className="stat-value">
               {Number.isFinite(selectedTargets?.targetKcal) ? `${Math.round(selectedTargets.targetKcal).toLocaleString()} kcal` : '—'}
             </div>
           </div>
           <div className="stat-tile">
-            <div className="stat-label">Goal</div>
+            <div className="label">Goal</div>
             <div className="stat-value">
               {selectedActivity && selectedActivity.goalType && Number.isFinite(selectedActivity.rateKgPerWeek)
                 ? `${selectedActivity.goalType} ${selectedActivity.rateKgPerWeek} kg/week`
@@ -202,7 +202,7 @@ export function PerformancePage() {
 
         {calorieDemandMethod === 'multiplier' ? (
           <div>
-            <p className="ingredient-sub">
+            <p className="info-label">
               Demand = BMR × multiplier. After deficit = Demand − deficit. Multiplier and Aim for each day come from
               the Activity Factor history active on that day.
             </p>

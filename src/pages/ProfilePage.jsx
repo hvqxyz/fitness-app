@@ -97,20 +97,20 @@ export function ProfilePage() {
     <>
       <section className="stat-grid">
         <div className="stat-tile">
-          <div className="stat-label">Age</div>
+          <div className="label">Age</div>
           <div className="stat-value">{profile.age ?? '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">Height</div>
+          <div className="label">Height</div>
           <div className="stat-value">{profile.heightCm ? `${profile.heightCm} cm` : '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">BMI</div>
+          <div className="label">BMI</div>
           <div className="stat-value">{bmi !== null ? bmi.toFixed(1) : '—'}</div>
           <div className="stat-sub">{bmi !== null ? bmiCategory(bmi) || '' : (profile.heightCm ? 'Log a weight' : 'Set height below')}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">Calorie target</div>
+          <div className="label">Calorie target</div>
           <div className="stat-value">{profile.targetKcal ? profile.targetKcal.toLocaleString() : '—'}</div>
         </div>
       </section>

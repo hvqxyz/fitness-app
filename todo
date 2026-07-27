@@ -1,14 +1,16 @@
 - Copy hover
-- Add tooltip in calory analytics about fat
 - Activity Based method
-- Activity Factor formating
-- Proportion analytics
 - Fiber analytics
 - Additional cache
-- Not count if not filled in calory analytics
+- Load on demand chunk
 
 Done
 - Weight button
 - Copy modal
 - Measurements color chart
 - Two fats on ring
+- Add tooltip in calory analytics about fat
+- Not count if not filled in calory analytics
+- Exercise cache
+- Activity Factor formating
+- Proportion analytics

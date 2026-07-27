@@ -117,20 +117,20 @@ export function WeightPage() {
 
       <section className="stat-grid">
         <div className="stat-tile">
-          <div className="stat-label">BMI</div>
+          <div className="label">BMI</div>
           <div className="stat-value">{stats?.bmi ?? '—'}</div>
           <div className="stat-sub">{stats?.bmiSub ?? '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">7-day trend</div>
+          <div className="label">7-day trend</div>
           <div className="stat-value">{stats?.trend7 ?? '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">30-day trend</div>
+          <div className="label">30-day trend</div>
           <div className="stat-value">{stats?.trend30 ?? '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">30-day Mean deviation</div>
+          <div className="label">30-day Mean deviation</div>
           <div className="stat-value">{stats?.meanDev ?? '—'}</div>
         </div>
       </section>

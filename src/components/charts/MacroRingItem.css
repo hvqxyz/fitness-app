@@ -26,6 +26,7 @@
   stroke: #3b82f6;
 
   stroke-linecap: round;
+  stroke-width: 4px;
 
   transform: rotate(-90deg);
   transform-origin: center;

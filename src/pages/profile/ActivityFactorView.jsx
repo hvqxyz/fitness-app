@@ -66,44 +66,55 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
     <div>
       <section className="stat-grid" style={{ marginTop: '10px' }}>
         <div className="stat-tile">
-          <div className="stat-label">Weight (last week)</div>
+          <div className="label">Weight (last week)</div>
           <div className="stat-value">{prevWeekAvgWeight !== null ? `${prevWeekAvgWeight.toFixed(1)} kg` : '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">BMR</div>
+          <div className="label">BMR</div>
           <div className="stat-value">{bmr !== null ? Math.round(bmr) : '—'}</div>
         </div>
       </section>
 
       <Card title="Activity Factor" style={{ marginTop: '10px' }}>
         <form className="ingredient-form" onSubmit={handleSubmit}>
-          <NumberInput
-            placeholder="Activity multiplier"
-            step="0.05"
-            min="1"
-            max="3"
-            inputMode="decimal"
-            required
-            value={multiplier}
-            onChange={setMultiplier}
-          />
-          <p className="ingredient-sub">Maintenance = BMR × activity multiplier. Goal adjustment uses 1 kg ≈ 7,000 kcal.</p>
+          <div className="form-field">
+            <label htmlFor="activity-multiplier">Activity multiplier</label>
+            <NumberInput
+                id="activity-multiplier"
+                placeholder="Activity multiplier"
+                step="0.05"
+                min="1"
+                max="3"
+                inputMode="decimal"
+                required
+                value={multiplier}
+                onChange={setMultiplier}
+            />
+          </div>
+          <span className="info-label">Maintenance = BMR × activity multiplier. Goal adjustment uses 1 kg ≈ 7,000 kcal.</span>
 
           <h3>Aim</h3>
-          <div className="range-toggle">
-            <button type="button" className="button range-btn" aria-pressed={goalType === 'Lose'} onClick={() => setGoalType('Lose')}>Lose weight</button>
-            <button type="button" className="button range-btn" aria-pressed={goalType === 'Gain'} onClick={() => setGoalType('Gain')}>Gain weight</button>
+          <div className="column">
+            <div className="range-toggle">
+              <button type="button" className="button range-btn" aria-pressed={goalType === 'Lose'} onClick={() => setGoalType('Lose')}>Lose weight</button>
+              <button type="button" className="button range-btn" aria-pressed={goalType === 'Gain'} onClick={() => setGoalType('Gain')}>Gain weight</button>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="target">Target (kg per week)</label>
+              <NumberInput
+                  id="target"
+                  placeholder="kg per week"
+                  step="0.05"
+                  min="0"
+                  inputMode="decimal"
+                  required
+                  value={goalRate}
+                  onChange={setGoalRate}
+              />
+            </div>
           </div>
 
-          <NumberInput
-            placeholder="kg per week"
-            step="0.05"
-            min="0"
-            inputMode="decimal"
-            required
-            value={goalRate}
-            onChange={setGoalRate}
-          />
           <Button type="submit">Save activity</Button>
         </form>
         {message.text && <p className={`message ${message.type}`.trim()} role="status">{message.text}</p>}
@@ -122,11 +133,11 @@ export function ActivityFactorView({ profile, prevWeekAvgWeight, activityHistory
 
       <section className="stat-grid" style={{ marginTop: '10px' }}>
         <div className="stat-tile">
-          <div className="stat-label">Maintenance Target</div>
+          <div className="label">Maintenance Target</div>
           <div className="stat-value">{maintenance !== null ? `${Math.round(maintenance)} kcal` : '—'}</div>
         </div>
         <div className="stat-tile">
-          <div className="stat-label">Goal kcal</div>
+          <div className="label">Goal kcal</div>
           <div className="stat-value">{goalKcalText}</div>
         </div>
       </section>

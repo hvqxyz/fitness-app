@@ -14,8 +14,11 @@ import './ProgressBar.css';
  * variant: 'stacked' (thicker track, label centered below — the daily/weekly
  * totals bars) | 'compact' (thinner track, a title/value head row above —
  * the 2x2 per-meal macro grid).
+ *
+ * `tooltip` (optional) is shown as a native title when hovering the track/
+ * fill, e.g. a value/secondaryValue breakdown the caller has already worded.
  */
-export function ProgressBar({ value, secondaryValue = 0, max, title, label, secondaryLabel, variant = 'stacked' }) {
+export function ProgressBar({ value, secondaryValue = 0, max, title, label, secondaryLabel, variant = 'stacked', tooltip }) {
   const total = value + secondaryValue;
   const percent = max ? Math.round((value / max) * 100) : 0;
   const totalPercent = max ? Math.round((total / max) * 100) : 0;
@@ -26,7 +29,7 @@ export function ProgressBar({ value, secondaryValue = 0, max, title, label, seco
   const isMobile = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
 
   const track = (trackClassName) => (
-    <div className={trackClassName}>
+    <div className={trackClassName} title={tooltip}>
       {secondaryValue > 0 && (
         <div className={`${fillClass} progress-bar-chart-fill-secondary`} style={secondaryFillStyle}></div>
       )}

@@ -142,10 +142,15 @@ export function MealSection({ meal, foods, ingredients, hasFoods, totals, target
                     ? `${Math.round(actual)} / ${Math.round(target)} ${unit}`
                     : `${Math.round(actual)} ${unit}`;
 
+                const fatTooltip = isFat
+                    ? `Saturated: ${Math.round(totals.satFat || 0)}g · Unsaturated: ${Math.round(totals.unsatFat || 0)}g`
+                    : undefined;
+
                 return (
                     <div
                         key={key}
                         className="meal-summary-item"
+                        title={fatTooltip}
                     >
                       <div className="meal-summary-header">
 
@@ -165,6 +170,7 @@ export function MealSection({ meal, foods, ingredients, hasFoods, totals, target
                           value={isFat ? totals.unsatFat || 0 : actual}
                           secondaryValue={isFat ? totals.satFat || 0 : undefined}
                           max={target}
+                          tooltip={fatTooltip}
                       />
                     </div>
                 );

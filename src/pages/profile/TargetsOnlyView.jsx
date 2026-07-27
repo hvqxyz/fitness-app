@@ -56,17 +56,30 @@ export function TargetsOnlyView({ profile, targetsHistory, onSaved }) {
     <div>
       <Card title="Targets" style={{ marginTop: '10px' }}>
         <form className="ingredient-form" onSubmit={handleSubmit}>
-          <NumberInput
-            placeholder="Target calories / day"
-            step="1"
-            min="0"
-            value={targetKcal}
-            onChange={setTargetKcal}
-          />
+          <div className="form-field">
+            <label htmlFor="target-calories">Target calories / day</label>
+            <NumberInput
+              id="target-calories"
+              placeholder="Target calories / day"
+              step="1"
+              min="0"
+              value={targetKcal}
+              onChange={setTargetKcal}
+            />
+          </div>
           <div className="ingredient-grid">
-            <NumberInput placeholder="Protein %" step="1" min="0" max="100" value={protein} onChange={setProtein} />
-            <NumberInput placeholder="Carbs %" step="1" min="0" max="100" value={carbs} onChange={setCarbs} />
-            <NumberInput placeholder="Fat %" step="1" min="0" max="100" value={fat} onChange={setFat} />
+            <div className="form-field">
+              <label htmlFor="protein">Protein %</label>
+              <NumberInput id="protein" placeholder="Protein %" step="1" min="0" max="100" value={protein} onChange={setProtein} />
+            </div>
+            <div className="form-field">
+              <label htmlFor="carbs">Carbs %</label>
+              <NumberInput id="carbs" placeholder="Carbs %" step="1" min="0" max="100" value={carbs} onChange={setCarbs} />
+            </div>
+            <div className="form-field">
+              <label htmlFor="fat">Fat %</label>
+              <NumberInput id="fat" placeholder="Fat %" step="1" min="0" max="100" value={fat} onChange={setFat} />
+            </div>
           </div>
           <p className="ingredient-sub">{percentHint}</p>
           <Button type="submit">Save targets</Button>

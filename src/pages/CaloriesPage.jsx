@@ -24,8 +24,10 @@ import {
 import { DateCarousel } from '../components/nav/DateCarousel.jsx';
 import { WeekCarousel } from '../components/nav/WeekCarousel.jsx';
 import { Card } from '../components/Card.jsx';
+import { Checkbox } from '../components/inputs/Checkbox.jsx';
 import { ProgressBar } from '../components/charts/ProgressBar.jsx';
 import { MacroRingItem } from '../components/charts/MacroRingItem.jsx';
+import { MacroProportionRing } from '../components/charts/MacroProportionRing.jsx';
 import { Tabs } from '../components/nav/Tabs.jsx';
 import { LineChart } from '../components/charts/LineChart.jsx';
 import { MealSection } from './calories/MealSection.jsx';
@@ -43,6 +45,12 @@ const WEEK_MACRO_CONFIGS = [
   { key: 'carbs', label: 'Carbs', unit: 'g' },
   { key: 'fat', label: 'Fat', unit: 'g' },
 ];
+
+// Same blue/green/red triple used for workout-type/running-metric colors elsewhere.
+const MACRO_PROPORTION_COLORS = {
+  light: { protein: '#2a78d6', carbs: '#1baf7a', fat: '#d03b3b' },
+  dark: { protein: '#3987e5', carbs: '#199e70', fat: '#e66767' },
+};
 
 const CHART_RANGE_OPTIONS = [7, 30, 90];
 
@@ -62,6 +70,7 @@ export function CaloriesPage() {
   const [selectedWeek, setSelectedWeekState] = useState(getSelectedWeek());
   const [view, setView] = useState('Tracker');
   const [chartRangeDays, setChartRangeDays] = useState(30);
+  const [excludeEmptyDays, setExcludeEmptyDays] = useState(false);
   const [ingredients, setIngredients] = useState([]);
   const [profile, setProfile] = useState({ targetKcal: null, proteinPercent: null, carbsPercent: null, fatPercent: null });
   const [targetsHistory, setTargetsHistory] = useState([]);
@@ -113,10 +122,18 @@ export function CaloriesPage() {
   const anyMacroTarget = MACRO_RING_CONFIGS.some((cfg) => gramsTargets[cfg.gramsKey]);
   const caloriePercent = targets.targetKcal ? Math.round((totalKcal / targets.targetKcal) * 100) : 0;
 
-  const weekStats = entries ? weeklyMacroStats(entries, selectedWeek, targetsForDate(selectedWeek, targetsHistory, profile)) : null;
+  const weekTargets = targetsForDate(selectedWeek, targetsHistory, profile);
+  const weekStats = entries ? weeklyMacroStats(entries, selectedWeek, weekTargets, excludeEmptyDays) : null;
 
   const caloriesPoints = entries ? caloriesOverTimePoints({ entries }).slice(-chartRangeDays) : [];
   const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const macroProportionColors = isDarkMode ? MACRO_PROPORTION_COLORS.dark : MACRO_PROPORTION_COLORS.light;
+  const macroProportionSegments = weekStats ? [
+    { label: 'Protein', value: weekStats.protein.actual * 4, targetPercent: weekTargets.proteinPercent, color: macroProportionColors.protein },
+    { label: 'Carbs', value: weekStats.carbs.actual * 4, targetPercent: weekTargets.carbsPercent, color: macroProportionColors.carbs },
+    { label: 'Fat', value: weekStats.fat.actual * 9, targetPercent: weekTargets.fatPercent, color: macroProportionColors.fat },
+  ] : [];
+  const macroProportionKcal = macroProportionSegments.reduce((sum, s) => sum + s.value, 0);
 
   function handleDateChange(key) {
     setSelectedDate(key);
@@ -325,8 +342,9 @@ export function CaloriesPage() {
           <Card title="Analytics by week" style={{ marginTop: '10px' }}>
             <WeekCarousel selectedWeek={selectedWeek} onChange={handleWeekChange} />
 
-            {weekStats && WEEK_MACRO_CONFIGS.map((cfg) => {
-              const { actual, target, avgActual, avgTarget, actualSatFat, actualUnsatFat } = weekStats[cfg.key];
+            {WEEK_MACRO_CONFIGS.map((cfg) => {
+              const { actual, target, avgActual, avgTarget, actualSatFat, actualUnsatFat } = weekStats?.[cfg.key]
+                ?? { actual: 0, target: null, avgActual: 0, avgTarget: null, actualSatFat: 0, actualUnsatFat: 0 };
               const isFat = cfg.key === 'fat';
               const percent = target ? Math.round((actual / target) * 100) : 0;
               const label = target !== null
@@ -335,8 +353,11 @@ export function CaloriesPage() {
               const secondaryLabel = target !== null
                 ? `avg ${Math.round(avgActual)} of ${Math.round(avgTarget)} ${cfg.unit}/day`
                 : `${Math.round(actual)} ${cfg.unit} — no target set`;
+              const fatTooltip = isFat
+                ? `Saturated: ${Math.round(actualSatFat)}g · Unsaturated: ${Math.round(actualUnsatFat)}g`
+                : undefined;
               return (
-                <div className="week-macro-item" key={cfg.key}>
+                <div className="week-macro-item" key={cfg.key} title={fatTooltip}>
                   <ProgressBar
                     title={cfg.label}
                     value={isFat ? actualUnsatFat : actual}
@@ -345,10 +366,27 @@ export function CaloriesPage() {
                     variant="compact"
                     label={label}
                     secondaryLabel={secondaryLabel}
+                    tooltip={fatTooltip}
                   />
                 </div>
               );
             })}
+
+            <div>
+              <Checkbox
+                  checked={excludeEmptyDays}
+                  onChange={setExcludeEmptyDays}
+                  label="Don't count days with no food logged"
+              />
+            </div>
+
+          </Card>
+
+          <Card title="Macro Distribution" style={{ marginTop: '10px' }}>
+            <MacroProportionRing
+              segments={macroProportionSegments}
+              centerLabel={weekStats ? `${Math.round(macroProportionKcal).toLocaleString()} kcal` : '—'}
+            />
           </Card>
         </div>
       )}

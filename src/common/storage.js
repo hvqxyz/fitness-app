@@ -534,16 +534,20 @@ export async function deleteGymExercise(row) {
  * The master catalog of gym exercise names (managed on Profile), used to
  * populate the exercise picker when assigning an exercise to a template.
  */
+const exercisesCache = createTtlCache(fetchExercises);
+
 export async function getExercises() {
-  return fetchExercises();
+  return exercisesCache.get();
 }
 
 export async function addExercise(name) {
   await appendExerciseRow(name);
+  exercisesCache.invalidate();
 }
 
 export async function deleteExercise(row) {
   await deleteRows(SHEET_NAMES.EXERCISES, [row]);
+  exercisesCache.invalidate();
 }
 
 /**
@@ -653,18 +657,29 @@ export function dayMacros(entry) {
 
 /**
  * Weekly protein/carbs/fat actual (summed across the Monday-start week's 7
- * days) vs. target (the profile's daily gram target × 7), for a weekly
- * progress-bar view. Also includes the plain per-day averages (actual/7,
- * target/7 — the latter is just the profile's daily gram target). Target
- * fields are null when the profile has no calorie/macro-percent target set,
- * same as macroGramTargets().
+ * days) vs. target (the profile's daily gram target × the day count), for a
+ * weekly progress-bar view. Also includes the plain per-day averages
+ * (actual/dayCount, target/dayCount — the latter is just the profile's daily
+ * gram target). Target fields are null when the profile has no calorie/
+ * macro-percent target set, same as macroGramTargets().
+ *
+ * Days with no foods logged always contribute 0 to the totals; when
+ * `excludeEmptyDays` is true, those days are also left out of the day count
+ * used for both `target` (so "total" compares against only the logged days'
+ * budget) and `avgActual`, so the figures reflect only days actually logged
+ * instead of being diluted by unlogged/future days in the week. Otherwise
+ * the day count is always the full 7-day week.
  */
-export function weeklyMacroStats(entries, weekStartKey, profile) {
+export function weeklyMacroStats(entries, weekStartKey, profile, excludeEmptyDays = false) {
   const dates = dateRangeInclusive(weekStartKey, shiftDateKey(weekStartKey, 6));
   const actual = { calories: 0, protein: 0, carbs: 0, fat: 0, satFat: 0, unsatFat: 0 };
+  let loggedDayCount = 0;
   dates.forEach((date) => {
-    actual.calories += dayTotal(entries[date]);
-    const macros = dayMacros(entries[date]);
+    const entry = entries[date];
+    const hasFoods = Array.isArray(entry?.foods) && entry.foods.length > 0;
+    if (hasFoods) loggedDayCount += 1;
+    actual.calories += dayTotal(entry);
+    const macros = dayMacros(entry);
     actual.protein += macros.protein;
     actual.carbs += macros.carbs;
     actual.satFat += macros.satFat;
@@ -672,13 +687,15 @@ export function weeklyMacroStats(entries, weekStartKey, profile) {
     actual.fat += macros.satFat + macros.unsatFat;
   });
 
+  const dayCount = excludeEmptyDays && loggedDayCount > 0 ? loggedDayCount : dates.length;
+
   const dailyTargets = macroGramTargets(profile);
-  const weeklyTarget = (dailyGrams) => (dailyGrams !== null ? dailyGrams * dates.length : null);
+  const weeklyTarget = (dailyGrams) => (dailyGrams !== null ? dailyGrams * dayCount : null);
 
   const buildStat = (actualTotal, dailyTargetGrams) => ({
     actual: actualTotal,
     target: weeklyTarget(dailyTargetGrams),
-    avgActual: actualTotal / dates.length,
+    avgActual: actualTotal / dayCount,
     avgTarget: dailyTargetGrams,
   });
 
