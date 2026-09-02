@@ -267,6 +267,28 @@ function workoutSetKilos(workout) {
   return Array.from({ length: Math.max(0, Math.floor(workout.sets)) }, () => workout.kilos);
 }
 
+function workoutSetReps(workout) {
+  if (Array.isArray(workout.setReps) && workout.setReps.length) return finiteNumbers(workout.setReps);
+  if (!Number.isFinite(workout.reps) || !Number.isFinite(workout.sets)) return [];
+  return Array.from({ length: Math.max(0, Math.floor(workout.sets)) }, () => workout.reps);
+}
+
+/**
+ * Total tonnage lifted in one Gym workout entry: Σ(kg × reps) across sets,
+ * pairing each set's kilos with that same set's reps (falling back to the
+ * first/only reps value for older entries that only ever logged one reps
+ * figure per session). Null when there's no per-set kilos to anchor to.
+ */
+function workoutVolume(workout) {
+  const kilosPerSet = workoutSetKilos(workout);
+  if (!kilosPerSet.length) return null;
+  const repsPerSet = workoutSetReps(workout);
+  return kilosPerSet.reduce((sum, kg, i) => {
+    const reps = repsPerSet[i] ?? repsPerSet[0];
+    return Number.isFinite(reps) ? sum + kg * reps : sum;
+  }, 0);
+}
+
 /**
  * Pace is entered/stored as M.SS (e.g. 5.55 means "5 min 55 sec"), not a true
  * decimal fraction of a minute, so it can't be averaged or plotted linearly
@@ -408,6 +430,7 @@ export function gymExerciseSetPoints(workouts, days, gymTemplate, exercise) {
   const maxSets = entries.reduce((max, w) => Math.max(max, workoutSetKilos(w).length), 0);
 
   const series = [];
+  const repsSeries = [];
   for (let setIndex = 1; setIndex <= maxSets; setIndex++) {
     series.push(
       dates.map((date) => {
@@ -417,9 +440,17 @@ export function gymExerciseSetPoints(workouts, days, gymTemplate, exercise) {
         return Number.isFinite(setKilos[setIndex - 1]) ? setKilos[setIndex - 1] : null;
       }),
     );
+    repsSeries.push(
+      dates.map((date) => {
+        const w = byDate[date];
+        if (!w) return null;
+        const setReps = workoutSetReps(w);
+        return Number.isFinite(setReps[setIndex - 1]) ? setReps[setIndex - 1] : null;
+      }),
+    );
   }
 
-  return { dates, series };
+  return { dates, series, repsSeries };
 }
 
 /**
@@ -492,7 +523,37 @@ export function gymExerciseKilosTrendPoints(workouts, days, gymTemplate, exercis
 }
 
 /**
- * workout: { date, type, distanceKm, paceMinPerKm, heartRate, runningType, gymTemplate, exercise, reps, kilos, sets, setKilos, note, calories }
+ * Daily training volume (Σ kg × reps across sets) for one Gym exercise
+ * within one template, over the trailing `days` window (same window rule as
+ * gymExerciseSetPoints). Unlike avgKilos/maxKilos this accounts for reps
+ * dropping on heavier sets, so it stays a fair "did I do more work today"
+ * comparison even when reps vary set-to-set. Returns
+ * [{ x: 'YYYY-MM-DD', volume }, ...]; volume is null on days with no session.
+ */
+export function gymExerciseVolumePoints(workouts, days, gymTemplate, exercise) {
+  const entries = workouts.filter(
+    (w) => w.type === 'Gym' && w.gymTemplate === gymTemplate && w.exercise === exercise,
+  );
+
+  const today = todayKey();
+  const lastLogged = entries.reduce((max, w) => (w.date > max ? w.date : max), today);
+  const endKey = lastLogged > today ? lastLogged : today;
+  const startKey = shiftDateKey(endKey, -(days - 1));
+  const dates = dateRangeInclusive(startKey, endKey);
+
+  const byDate = {};
+  entries.forEach((w) => {
+    byDate[w.date] = w;
+  });
+
+  return dates.map((date) => {
+    const w = byDate[date];
+    return { x: date, volume: w ? workoutVolume(w) : null };
+  });
+}
+
+/**
+ * workout: { date, type, distanceKm, paceMinPerKm, heartRate, runningType, gymTemplate, exercise, reps, kilos, sets, setKilos, setReps, note, calories }
  * Only the fields relevant to `type` need to be set; the rest are written blank.
  * A Gym workout logs one exercise instance at a time (exercise/reps/kilos/sets
  * are the actual performance that day), separate from the exercise's

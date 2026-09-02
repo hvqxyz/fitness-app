@@ -37,9 +37,9 @@
 
 .gym-set-kilos-fields {
   flex: 1 1 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   margin-top: 5px;
 }
 
@@ -47,6 +47,19 @@
   display: none;
 }
 
-.gym-log-list .gym-set-kilos-fields input {
+.gym-set-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gym-set-row .gym-set-label {
+  flex: 0 0 44px;
+  font-size: 0.85em;
+  color: var(--muted, #888);
+}
+
+.gym-log-list .gym-set-row input {
+  flex: 1 1 80px;
   min-width: 0;
 }

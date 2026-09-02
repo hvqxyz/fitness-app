@@ -19,6 +19,7 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
   const [sets, setSets] = useState('');
   const [useSetKilos, setUseSetKilos] = useState(false);
   const [setKilosValues, setSetKilosValues] = useState([]);
+  const [setRepsValues, setSetRepsValues] = useState([]);
   const isMobile = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
 
   useEffect(() => {
@@ -28,23 +29,31 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
     const hasSetKilos = Array.isArray(existing?.setKilos) && existing.setKilos.length > 0;
     setUseSetKilos(hasSetKilos);
     setSetKilosValues(hasSetKilos ? existing.setKilos.map(String) : []);
+    setSetRepsValues(hasSetKilos && Array.isArray(existing?.setReps)
+      ? existing.setKilos.map((_, i) => (existing.setReps[i] !== undefined ? String(existing.setReps[i]) : ''))
+      : []);
     // Mirrors the previous imperative rebuild: any workouts refresh resets this row to the saved entry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workouts, selectedDate, activeTemplate, ex.exercise]);
 
-  function resizedSetKilos(count, currentValues) {
+  function resizedSetValues(count, currentValues, existingArray, existingFallback) {
     return Array.from({ length: count }, (_, i) => {
       if (currentValues[i] !== undefined) return currentValues[i];
-      const fallback = existing?.setKilos?.[i] ?? existing?.kilos;
+      const fallback = existingArray?.[i] ?? existingFallback;
       return fallback !== undefined ? String(fallback) : '';
     });
+  }
+
+  function resizeSetRows(count) {
+    setSetKilosValues((prev) => resizedSetValues(count, prev, existing?.setKilos, existing?.kilos));
+    setSetRepsValues((prev) => resizedSetValues(count, prev, existing?.setReps, existing?.reps));
   }
 
   function handleSetsChange(value) {
     setSets(value);
     if (useSetKilos) {
       const count = Math.max(0, Math.floor(parseFloat(value) || existing?.setKilos?.length || ex.targetSets || 0));
-      setSetKilosValues((prev) => resizedSetKilos(count, prev));
+      resizeSetRows(count);
     }
   }
 
@@ -52,12 +61,20 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
     setUseSetKilos(checked);
     if (checked) {
       const count = Math.max(0, Math.floor(parseFloat(sets) || existing?.setKilos?.length || ex.targetSets || 0));
-      setSetKilosValues((prev) => resizedSetKilos(count, prev));
+      resizeSetRows(count);
     }
   }
 
   function handleSetKiloChange(index, value) {
     setSetKilosValues((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }
+
+  function handleSetRepChange(index, value) {
+    setSetRepsValues((prev) => {
       const next = [...prev];
       next[index] = value;
       return next;
@@ -83,6 +100,11 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
         payload.sets = setKilosNums.length;
         payload.kilos = setKilosNums.reduce((sum, v) => sum + v, 0) / setKilosNums.length;
       }
+      const setRepsNums = setRepsValues.map((v) => parseFloat(v)).filter((v) => Number.isFinite(v));
+      if (setRepsNums.length) {
+        payload.setReps = setRepsNums;
+        payload.reps = setRepsNums.reduce((sum, v) => sum + v, 0) / setRepsNums.length;
+      }
     } else {
       const kilosNum = parseFloat(kilos);
       if (Number.isFinite(kilosNum)) payload.kilos = kilosNum;
@@ -106,7 +128,9 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
         {isMobile && (
             <>
               <div className="gym-log-fields">
-                <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
+                {!useSetKilos && (
+                    <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
+                )}
                 {!useSetKilos && (
                     <NumberInput placeholder="Kilos" step="0.5" min="0" inputMode="decimal" value={kilos} onChange={setKilos} />
                 )}
@@ -116,7 +140,7 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
                 <Checkbox
                     checked={useSetKilos}
                     onChange={handleToggleSetKilos}
-                    label="Different weight per set"
+                    label="Different reps/weight per set"
                 />
                 <Button onClick={handleSave}>{existing ? 'Update' : 'Log'}</Button>
               </div>
@@ -125,7 +149,9 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
         {!isMobile && (
             <>
               <div className="gym-log-fields">
-                <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
+                {!useSetKilos && (
+                    <NumberInput placeholder="Reps" step="1" min="0" value={reps} onChange={setReps} />
+                )}
                 {!useSetKilos && (
                     <NumberInput placeholder="Kilos" step="0.5" min="0" inputMode="decimal" value={kilos} onChange={setKilos} />
                 )}
@@ -136,7 +162,7 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
               <Checkbox
                   checked={useSetKilos}
                   onChange={handleToggleSetKilos}
-                  label="Different weight per set"
+                  label="Different reps/weight per set"
               />
             </>
         )}
@@ -144,15 +170,24 @@ function GymExerciseRow({ ex, activeTemplate, workouts, selectedDate, onSaved, o
         {useSetKilos && (
           <div className="gym-set-kilos-fields">
             {setKilosValues.map((value, i) => (
-              <NumberInput
-                key={i}
-                placeholder={`Set ${i + 1} kg`}
-                step="0.5"
-                min="0"
-                inputMode="decimal"
-                value={value}
-                onChange={(v) => handleSetKiloChange(i, v)}
-              />
+              <div className="gym-set-row" key={i}>
+                <span className="gym-set-label">Set {i + 1}</span>
+                <NumberInput
+                  placeholder="Reps"
+                  step="1"
+                  min="0"
+                  value={setRepsValues[i] ?? ''}
+                  onChange={(v) => handleSetRepChange(i, v)}
+                />
+                <NumberInput
+                  placeholder="Kilos"
+                  step="0.5"
+                  min="0"
+                  inputMode="decimal"
+                  value={value}
+                  onChange={(v) => handleSetKiloChange(i, v)}
+                />
+              </div>
             ))}
           </div>
         )}

@@ -18,7 +18,11 @@ function formatGymExerciseDetail(w) {
   const parts = [w.exercise];
   if (Array.isArray(w.setKilos) && w.setKilos.length) {
     const setsText = w.setKilos
-      .map((kg, index) => `- Set ${index + 1}: ${w.reps !== undefined ? `${w.reps} reps × ` : ''}${kg} kg`)
+      .map((kg, index) => {
+        const reps = Array.isArray(w.setReps) ? w.setReps[index] : undefined;
+        const repsValue = reps !== undefined ? reps : w.reps;
+        return `- Set ${index + 1}: ${repsValue !== undefined ? `${repsValue} reps × ` : ''}${kg} kg`;
+      })
       .join(' \n ');
     parts.push(setsText);
     return parts.join(' \n ');

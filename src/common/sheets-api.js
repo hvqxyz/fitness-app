@@ -21,7 +21,7 @@ const MEASUREMENTS_SHEET = 'Measurements';
 const FOOD_HEADER = ['Date', 'Name', 'Kcal', 'Meal', 'WeightG', 'Fiber', 'Carbs', 'SatFat', 'UnsatFat', 'Protein'];
 const INGREDIENTS_HEADER = ['Name', 'KcalPer100g', 'FiberPer100g', 'CarbsPer100g', 'SatFatPer100g', 'UnsatFatPer100g', 'ProteinPer100g'];
 const PROFILE_HEADER = ['Age', 'HeightCm', 'TargetKcal', 'ProteinPercent', 'CarbsPercent', 'FatPercent'];
-const WORKOUTS_HEADER = ['Date', 'Type', 'DistanceKm', 'PaceMinPerKm', 'HeartRate', 'GymTemplate', 'Note', 'Calories', 'Exercise', 'Reps', 'Kilos', 'Sets', 'RunningType', 'SetKilos'];
+const WORKOUTS_HEADER = ['Date', 'Type', 'DistanceKm', 'PaceMinPerKm', 'HeartRate', 'GymTemplate', 'Note', 'Calories', 'Exercise', 'Reps', 'Kilos', 'Sets', 'RunningType', 'SetKilos', 'SetReps'];
 const GYM_EXERCISES_HEADER = ['Template', 'Exercise', 'TargetReps', 'TargetSets'];
 const EXERCISES_HEADER = ['Name'];
 const GYM_TEMPLATES_HEADER = ['Name'];
@@ -109,7 +109,7 @@ async function findOrCreateSpreadsheet() {
     method: 'PUT',
     body: JSON.stringify({ values: [INGREDIENTS_HEADER] }),
   });
-  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:N1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:O1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [WORKOUTS_HEADER] }),
   });
@@ -227,7 +227,7 @@ let workoutsHeaderEnsured = false;
 async function ensureWorkoutsSetsHeader() {
   if (workoutsHeaderEnsured) return;
   workoutsHeaderEnsured = true;
-  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:N1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:O1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [WORKOUTS_HEADER] }),
   });
@@ -245,7 +245,7 @@ async function ensureWorkoutsSheet() {
   });
   sheetIds[WORKOUTS_SHEET] = result.replies[0].addSheet.properties.sheetId;
 
-  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:N1?valueInputOption=RAW`, {
+  await apiFetch(`${spreadsheetId}/values/${WORKOUTS_SHEET}!A1:O1?valueInputOption=RAW`, {
     method: 'PUT',
     body: JSON.stringify({ values: [WORKOUTS_HEADER] }),
   });
@@ -667,14 +667,14 @@ export async function clearAndWrite(sheetName, headerColumns, rows) {
 
 export async function fetchWorkouts() {
   const id = await ensureSpreadsheet();
-  const result = await apiFetch(`${id}/values/${WORKOUTS_SHEET}!A2:N?valueRenderOption=UNFORMATTED_VALUE`);
+  const result = await apiFetch(`${id}/values/${WORKOUTS_SHEET}!A2:O?valueRenderOption=UNFORMATTED_VALUE`);
   const num = (v) => (v !== undefined && v !== '' ? parseFloat(v) : undefined);
   const nums = (v) => (v !== undefined && v !== ''
     ? String(v).split(',').map((part) => parseFloat(part.trim())).filter((n) => Number.isFinite(n))
     : undefined);
   return (result.values || [])
     .map((row, i) => {
-      const [date, type, distanceKm, paceMinPerKm, heartRate, gymTemplate, note, calories, exercise, reps, kilos, sets, runningType, setKilos] = row;
+      const [date, type, distanceKm, paceMinPerKm, heartRate, gymTemplate, note, calories, exercise, reps, kilos, sets, runningType, setKilos, setReps] = row;
       return {
         date,
         type,
@@ -690,6 +690,7 @@ export async function fetchWorkouts() {
         sets: num(sets),
         runningType: runningType || undefined,
         setKilos: nums(setKilos),
+        setReps: nums(setReps),
         _row: i + 2,
       };
     })
@@ -698,14 +699,15 @@ export async function fetchWorkouts() {
 
 export async function appendWorkoutRow(workout) {
   const id = await ensureSpreadsheet();
-  const { date, type, distanceKm, paceMinPerKm, heartRate, gymTemplate, note, calories, exercise, reps, kilos, sets, runningType, setKilos } = workout;
+  const { date, type, distanceKm, paceMinPerKm, heartRate, gymTemplate, note, calories, exercise, reps, kilos, sets, runningType, setKilos, setReps } = workout;
   const setKilosValue = Array.isArray(setKilos) ? setKilos.join(',') : '';
+  const setRepsValue = Array.isArray(setReps) ? setReps.join(',') : '';
   await apiFetch(`${id}/values/${WORKOUTS_SHEET}:append?valueInputOption=RAW`, {
     method: 'POST',
     body: JSON.stringify({
       values: [[
         date, type, distanceKm ?? '', paceMinPerKm ?? '', heartRate ?? '', gymTemplate ?? '', note ?? '',
-        calories ?? '', exercise ?? '', reps ?? '', kilos ?? '', sets ?? '', runningType ?? '', setKilosValue,
+        calories ?? '', exercise ?? '', reps ?? '', kilos ?? '', sets ?? '', runningType ?? '', setKilosValue, setRepsValue,
       ]],
     }),
   });

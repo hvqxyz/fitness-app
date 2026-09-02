@@ -5,6 +5,7 @@ import {
   decimalMinutesToPaceLabel,
   gymExerciseSetPoints,
   gymExerciseKilosTrendPoints,
+  gymExerciseVolumePoints,
 } from './storage.js';
 
 const TYPE_COLORS = {
@@ -31,6 +32,7 @@ const SET_COLORS = {
 const runningChartInstances = new WeakMap();
 const gymExerciseChartInstances = new WeakMap();
 const gymKilosTrendChartInstances = new WeakMap();
+const gymVolumeChartInstances = new WeakMap();
 
 
 function formatMetricValue(metric, value, isPace) {
@@ -120,7 +122,7 @@ export function renderRunningMetricChart(canvas, workouts, { metric, runningType
  * per-set kilos tracked individually, only one value per session).
  */
 export function renderGymExerciseSetsChart(canvas, workouts, { gymTemplate, exercise, days = 30 } = {}) {
-  const { dates, series } = gymExerciseSetPoints(workouts, days, gymTemplate, exercise);
+  const { dates, series, repsSeries } = gymExerciseSetPoints(workouts, days, gymTemplate, exercise);
 
   const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const colors = isDarkMode ? SET_COLORS.dark : SET_COLORS.light;
@@ -139,6 +141,7 @@ export function renderGymExerciseSetsChart(canvas, workouts, { gymTemplate, exer
         label: `Set ${i + 1}`,
         data,
         backgroundColor: colors[i % colors.length],
+        reps: repsSeries[i],
       })),
     },
     options: {
@@ -151,6 +154,15 @@ export function renderGymExerciseSetsChart(canvas, workouts, { gymTemplate, exer
       },
       plugins: {
         legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const reps = ctx.dataset.reps?.[ctx.dataIndex];
+              const repsText = Number.isFinite(reps) ? ` × ${reps} reps` : '';
+              return `${ctx.dataset.label}: ${ctx.parsed.y} kg${repsText}`;
+            },
+          },
+        },
       },
     },
   });
@@ -260,4 +272,69 @@ export function renderGymExerciseKilosTrendChart(canvas, workouts, { gymTemplate
   });
 
   gymKilosTrendChartInstances.set(canvas, chart);
+}
+
+/**
+ * Renders (or re-renders) a bar chart of training volume (Σ kg × reps across
+ * sets) per session for one Gym exercise within one template, over the
+ * trailing `days` window. Includes a dashed average-volume reference line,
+ * same convention as renderRunningMetricChart.
+ */
+export function renderGymExerciseVolumeChart(canvas, workouts, { gymTemplate, exercise, days = 30 } = {}) {
+  const points = gymExerciseVolumePoints(workouts, days, gymTemplate, exercise);
+
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const color = (isDarkMode ? TYPE_COLORS.dark : TYPE_COLORS.light).Gym;
+
+  const existing = gymVolumeChartInstances.get(canvas);
+  if (existing) {
+    existing.destroy();
+    gymVolumeChartInstances.delete(canvas);
+  }
+
+  const values = points.map((p) => p.volume);
+  const validValues = values.filter((v) => v !== null && v !== undefined && Number.isFinite(v));
+  const average = validValues.length ? validValues.reduce((sum, v) => sum + v, 0) / validValues.length : null;
+
+  const datasets = [{
+    label: 'Volume',
+    data: values,
+    backgroundColor: color,
+    borderRadius: 4,
+  }];
+
+  if (average !== null) {
+    datasets.push({
+      type: 'line',
+      label: `Average (${Math.round(average)} kg)`,
+      data: points.map(() => average),
+      borderColor: '#898781',
+      borderDash: [6, 4],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+    });
+  }
+
+  const chart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: points.map((p) => p.x.slice(5)),
+      datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.5,
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'Volume (kg)' } },
+      },
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)} kg` } },
+      },
+    },
+  });
+
+  gymVolumeChartInstances.set(canvas, chart);
 }

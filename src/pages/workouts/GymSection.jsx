@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addWorkout, deleteWorkout, gymExerciseSummaryStats } from '../../common/storage.js';
-import { renderGymExerciseSetsChart, renderGymExerciseKilosTrendChart } from '../../common/workout-chart.js';
+import { renderGymExerciseSetsChart, renderGymExerciseKilosTrendChart, renderGymExerciseVolumeChart } from '../../common/workout-chart.js';
 import { ChartCanvas } from '../../components/ChartCanvas.jsx';
 import { MacroRingItem } from '../../components/charts/MacroRingItem.jsx';
 import { GymExerciseLog } from './GymExerciseLog.jsx';
@@ -137,6 +137,15 @@ export function GymSection({ workouts, gymExercises, gymTemplates, selectedDate,
                     gymTemplate: activeTemplate, exercise: analyticsExercise, mode: kilosTrendMode, days: analyticsDays, weightEntries,
                   })}
                   deps={[workouts, activeTemplate, analyticsExercise, kilosTrendMode, analyticsDays, weightEntries]}
+                />
+              </div>
+
+              <h3>Training volume</h3>
+
+              <div className="chart-wrap">
+                <ChartCanvas
+                  draw={(canvas) => renderGymExerciseVolumeChart(canvas, workouts, { gymTemplate: activeTemplate, exercise: analyticsExercise, days: analyticsDays })}
+                  deps={[workouts, activeTemplate, analyticsExercise, analyticsDays]}
                 />
               </div>
             </>
