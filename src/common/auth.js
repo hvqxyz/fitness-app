@@ -1,19 +1,23 @@
 import { GOOGLE_CLIENT_ID } from './config.js';
 
-const SCOPE = 'https://www.googleapis.com/auth/drive.file openid profile';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const SCOPE = `${DRIVE_SCOPE} openid profile`;
 const SESSION_KEY = 'fitness-counter-google-token';
 
 let tokenClient = null;
 let accessToken = null;
 let tokenExpiry = 0;
 let userProfile = null;
+let forceConsent = false;
 
 function loadFromSession() {
   const raw = sessionStorage.getItem(SESSION_KEY);
   if (!raw) return;
   try {
-    const { token, expiry } = JSON.parse(raw);
-    if (token && expiry > Date.now()) {
+    const { token, expiry, scope } = JSON.parse(raw);
+    // Drop tokens cached without the Drive scope (e.g. from an older build or
+    // a consent screen where the Drive checkbox was left unticked).
+    if (token && expiry > Date.now() && hasDriveScope(scope)) {
       accessToken = token;
       tokenExpiry = expiry;
     }
@@ -22,8 +26,24 @@ function loadFromSession() {
   }
 }
 
-function saveToSession() {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token: accessToken, expiry: tokenExpiry }));
+function hasDriveScope(scope) {
+  return typeof scope === 'string' && scope.split(' ').includes(DRIVE_SCOPE);
+}
+
+function saveToSession(scope) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token: accessToken, expiry: tokenExpiry, scope }));
+}
+
+/**
+ * Forgets the current token so the next getAccessToken() asks Google again,
+ * showing the consent screen. Used when Google rejects the token for missing
+ * scopes.
+ */
+export function invalidateToken() {
+  accessToken = null;
+  tokenExpiry = 0;
+  forceConsent = true;
+  sessionStorage.removeItem(SESSION_KEY);
 }
 
 loadFromSession();
@@ -57,12 +77,21 @@ export function getAccessToken() {
         reject(new Error(resp.error_description || resp.error));
         return;
       }
+      if (!google.accounts.oauth2.hasGrantedAllScopes(resp, DRIVE_SCOPE)) {
+        forceConsent = true;
+        reject(new Error(
+          'Google Drive access was not granted. Sign in again and tick the ' +
+          '"See, edit, create and delete only the specific Google Drive files you use with this app" checkbox.'
+        ));
+        return;
+      }
       accessToken = resp.access_token;
       tokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
-      saveToSession();
+      forceConsent = false;
+      saveToSession(resp.scope);
       resolve(accessToken);
     };
-    client.requestAccessToken({ prompt: isSignedIn() ? 'none' : '' });
+    client.requestAccessToken({ prompt: forceConsent ? 'consent' : '' });
   });
 }
 

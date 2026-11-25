@@ -1,4 +1,4 @@
-import { getAccessToken } from './auth.js';
+import { getAccessToken, invalidateToken } from './auth.js';
 
 const DRIVE_BASE = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
@@ -15,6 +15,10 @@ async function driveFetch(pathAndQuery, options = {}) {
   });
   if (!res.ok) {
     const body = await res.text();
+    if (res.status === 401 || (res.status === 403 && body.includes('ACCESS_TOKEN_SCOPE_INSUFFICIENT'))) {
+      invalidateToken();
+      throw new Error('Google sign-in is missing Drive access. Please try again and allow Google Drive access when asked.');
+    }
     throw new Error(`Google Drive error (${res.status}): ${body}`);
   }
   return res.json();

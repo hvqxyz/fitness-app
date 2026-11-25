@@ -1,4 +1,4 @@
-import { getAccessToken } from './auth.js';
+import { getAccessToken, invalidateToken } from './auth.js';
 import { findOrCreateFolder, findFileInFolder, moveFileToFolder } from './drive-api.js';
 
 const API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -46,6 +46,10 @@ async function apiFetch(pathAndQuery, options = {}) {
   });
   if (!res.ok) {
     const body = await res.text();
+    if (res.status === 401 || (res.status === 403 && body.includes('ACCESS_TOKEN_SCOPE_INSUFFICIENT'))) {
+      invalidateToken();
+      throw new Error('Google sign-in is missing Drive access. Please try again and allow Google Drive access when asked.');
+    }
     throw new Error(`Google Sheets error (${res.status}): ${body}`);
   }
   return res.status === 204 || res.status === 200 && res.headers.get('content-length') === '0'
